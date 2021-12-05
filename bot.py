@@ -5,9 +5,9 @@ import nextcord
 from nextcord.ext import commands
 import json
 import lyricsgenius
-import os 
 import subprocess
 import shlex
+import pafy 
 
 # Suppress noise about console usage from errors
 
@@ -69,15 +69,28 @@ class Music(commands.Cog):
       	ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
       	cmd=shlex.split(f'youtube-dl "ytsearch:{url}" --get-thumbnail')
       	cmd2=shlex.split(f'youtube-dl "ytsearch:{url}" --get-duration')
+      	cmd3=shlex.split(f'youtube-dl "ytsearch:{url}" --get-id')
       	img = subprocess.check_output(cmd)
       	img2 = subprocess.check_output(cmd2)
+      	img3 = subprocess.check_output(cmd3)
       	finalimg = img.decode('utf-8')
       	finaldur = img2.decode('utf-8')
+      	finalview = img3.decode('utf-8')
+      	url = f"https://www.youtube.com/watch?v={finalview}"
+      	video = pafy.new(url) 
+      	value = video.viewcount
+      	value2 = video.likes
       	embed=nextcord.Embed(description=f"**Currently Playing!**", color = nextcord.Color.green())
       	embed.add_field(name = "Title", value =f"{player.title}", inline = False)
+      	embed.add_field(name = "Views", value =f"{value}", inline = False)
+      	embed.add_field(name = "Likes", value =f"{value2}", inline = False)
+      	embed.add_field(name = "Disikes", value =f"Lol youtube removed them.", inline = False)
       	embed.add_field(name = "Length", value =f"{finaldur}", inline = False)
-      	embed.set_image(url=finalimg)
+      	channel = ctx.author.voice.channel.id
+      	embed.add_field(name = "Listen along!", value =f"<#{channel}>", inline = False)
+      	embed.set_thumbnail(url=finalimg)
       	await ctx.reply(embed=embed,mention_author=False)
+    
     @commands.command()
     async def pause(self, ctx):
         song = ctx.voice_client.pause()
@@ -86,7 +99,7 @@ class Music(commands.Cog):
     @commands.command()
     async def resume(self, ctx):
         song = ctx.voice_client.resume()
-        embed=nextcord.Embed(description=f"Resuming...", color = nextcord.Color.green())
+        embed=nextcord.Embed(description=f"**Resuming** the song...", color = nextcord.Color.green())
         await ctx.reply(embed=embed, mention_author=False)
     @commands.command()
     async def leave(self, ctx):
@@ -162,7 +175,7 @@ class HelpDropdown(nextcord.ui.Select):
 
 class DropdownView(nextcord.ui.View):
     def __init__(self):
-        super().__init__(timeout=10.0)
+        super().__init__(timeout=20.0)
         self.add_item(HelpDropdown())
     async def on_timeout(self):
         self.children[0].disabled = True
@@ -175,7 +188,6 @@ class DropdownView(nextcord.ui.View):
 async def help(ctx):
     author_id = ctx.author.id
     embed=nextcord.Embed(title="Help Center",description="Please select a category from the list below!")
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
     view = DropdownView()
     view.message = await ctx.reply(embed=embed, view=view, mention_author=False)
     
@@ -184,12 +196,20 @@ async def help(ctx):
 @bot.command()
 @commands.cooldown(5, 30, commands.BucketType.user)
 async def lyrics(ctx, *, title):
-    genius = lyricsgenius.Genius("TOKEN")
+    genius = lyricsgenius.Genius("GENIUSTOKEN")
     genius.verbose = False
     genius.remove_section_headers = True
     genius.skip_non_songs = True
     song = genius.search_song(f"{title}")
-    embed=nextcord.Embed(title=f"Lyrics for {title}!" ,description=f"{song.lyrics}")
+    test_stirng = f"{song.lyrics}"
+    total = 1
+    for i in range(len(test_stirng)):
+     if(test_stirng[i] == ' ' or test_stirng == '\n' or test_stirng == '\t'):
+      	total = total + 1
+    if total > 1000:
+      embed=nextcord.Embed(description=f"Sorry! The number of characters in **{title}** exceeds Discord's character limit! (2000 characters). There's nothing I can do :pensive: ")
+      await ctx.reply(embed=embed, mention_author=False)
+    embed=nextcord.Embed(title=f"Here are the lyrics for **{title}**!" ,description=f"{song.lyrics}")
     await ctx.reply(embed=embed, mention_author=False)
   
 # Invite command 
@@ -197,10 +217,11 @@ async def lyrics(ctx, *, title):
 @bot.command()
 @commands.cooldown(5, 30, commands.BucketType.user)
 async def invite(ctx):
-	yes = nextcord.ui.View()
-	yes.add_item(nextcord.ui.Button(label="Invite me!", url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=66087744&scope=bot"))
-	embed=nextcord.Embed(description="Here's my invite link!")
-	await ctx.reply(embed=embed,mention_author=False, view=yes)
+	helplink = nextcord.ui.View()
+	helplink.add_item(nextcord.ui.Button(label="Invite me!", url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=66087744&scope=bot"))
+	helplink.add_item(nextcord.ui.Button(label="Visit Project!", url="https://github.com/ZingyTomato/Niko-Music"))
+	embed=nextcord.Embed(description="Here are some of my **Related Links!**")
+	await ctx.reply(embed=embed,mention_author=False, view=helplink)
 
 # Error Handling
 
@@ -211,4 +232,4 @@ async def on_command_error(ctx, error):
         await ctx.reply(embed=embed, mention_author=False)
 
 bot.add_cog(Music(bot))
-bot.run('TOKEN')
+bot.run('BOT TOKEN')
