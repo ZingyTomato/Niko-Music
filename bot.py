@@ -59,7 +59,7 @@ class YTDLSource(nextcord.PCMVolumeTransformer):
 
         filename = data['url'] if stream else ytdl.prepare_filename(data)
         return cls(nextcord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
-        
+
 # Main music cog
 
 class Music(commands.Cog):
@@ -69,9 +69,9 @@ class Music(commands.Cog):
     async def stream(self, ctx, *, url):
       player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
       ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
-      embed1=nextcord.Embed(description=f"Gathering info on **{url}**, please wait...")
+      embed1=nextcord.Embed(description=f":mag: Gathering info on **{url}**, please wait...")
       channel = ctx.author.voice.channel.id
-      embed1.add_field(name = "Click Here To Listen Along!", value =f"<#{channel}>", inline = False)
+      embed1.add_field(name = ":point_down: Click Here To Listen Along!", value =f"<#{channel}>", inline = False)
       msg = await ctx.reply(embed=embed1, mention_author=False)
       cmd=shlex.split(f'youtube-dl "ytsearch:{url}" --get-thumbnail')
       cmd2=shlex.split(f'youtube-dl "ytsearch:{url}" --get-duration')
@@ -87,24 +87,40 @@ class Music(commands.Cog):
       value = video.viewcount
       value2 = video.likes
       embed=nextcord.Embed(description=f"🎶  **Currently Playing!**", color = nextcord.Color.green())
-      embed.add_field(name = "Title", value =f"{player.title}", inline = False)
-      embed.add_field(name = "Views", value =f"{value}", inline = False)
-      embed.add_field(name = "Likes", value =f"{value2}", inline = False)
-      embed.add_field(name = "Disikes", value =f"Sadly Youtube Removed Them So I Cannot Display Anything Here.", inline = False)
-      embed.add_field(name = "Length", value =f"{finaldur}", inline = False)
+      embed.add_field(name = ":scroll: Title", value =f"{player.title}", inline = False)
+      embed.add_field(name = ":eyes: Views", value =f"{value}", inline = False)
+      embed.add_field(name = ":thumbsup: Likes", value =f"{value2}", inline = False)
+      embed.add_field(name = ":thumbsdown: Disikes", value =f"Youtube got rid of them.", inline = False)
+      embed.add_field(name = ":alarm_clock: Length", value =f"{finaldur}", inline = False)
       channel = ctx.author.voice.channel.id
-      embed.add_field(name = "Click Here To Listen Along!", value =f"<#{channel}>", inline = False)
+      embed.add_field(name = ":point_down: Click Here To Listen Along!", value =f"<#{channel}>", inline = False)
       embed.set_thumbnail(url=finalimg)
       await asyncio.sleep(1)
       await msg.edit(embed=embed)
     
     @commands.command()
     async def pause(self, ctx):
+        voicetrue = ctx.author.voice
+        myvoicetrue = ctx.guild.me.voice
+        if voicetrue is None:
+            embed=nextcord.Embed(description="🛑 You have not **joined** a voice channel!", color = nextcord.Color.red())
+            return await ctx.reply(embed=embed, mention_author=False)
+        if myvoicetrue  is None:
+            embed=nextcord.Embed(description="🛑 I am not currently **in** a voice channel!", color = nextcord.Color.red())
+            return await ctx.reply(embed=embed, mention_author=False)
         song = ctx.voice_client.pause()
         embed=nextcord.Embed(description=f"⏸️ I've **paused** the currently playing song!", color = nextcord.Color.red())
         await ctx.reply(embed=embed, mention_author=False)
     @commands.command()
     async def resume(self, ctx):
+        voicetrue = ctx.author.voice
+        myvoicetrue = ctx.guild.me.voice
+        if voicetrue is None:
+            embed=nextcord.Embed(description="🛑 You have not **joined** a voice channel!", color = nextcord.Color.red())
+            return await ctx.reply(embed=embed, mention_author=False)
+        if myvoicetrue  is None:
+            embed=nextcord.Embed(description="🛑 I am not currently **in** a voice channel!", color = nextcord.Color.red())
+            return await ctx.reply(embed=embed, mention_author=False)
         song = ctx.voice_client.resume()
         embed=nextcord.Embed(description=f"**▶️ Resuming** the song...", color = nextcord.Color.green())
         await ctx.reply(embed=embed, mention_author=False)
@@ -120,10 +136,18 @@ class Music(commands.Cog):
             embed=nextcord.Embed(description="🛑 I am not currently **in** a voice channel!", color = nextcord.Color.red())
             return await ctx.reply(embed=embed, mention_author=False)
         await ctx.voice_client.disconnect()
-        embed=nextcord.Embed(description=f"➖  I have **left** your voice channel!", color = nextcord.Color.green())
+        embed=nextcord.Embed(description=f"🔓 I have **left** your voice channel!", color = nextcord.Color.green())
         await ctx.reply(embed=embed, mention_author=False)
     @commands.command()
     async def stop(self, ctx):
+        voicetrue = ctx.author.voice
+        myvoicetrue = ctx.guild.me.voice
+        if voicetrue is None:
+            embed=nextcord.Embed(description="🛑 You have not **joined** a voice channel!", color = nextcord.Color.red())
+            return await ctx.reply(embed=embed, mention_author=False)
+        if myvoicetrue  is None:
+            embed=nextcord.Embed(description="🛑 I am not currently **in** a voice channel!", color = nextcord.Color.red())
+            return await ctx.reply(embed=embed, mention_author=False)
         song = ctx.voice_client.stop()
         embed=nextcord.Embed(description=f"🛑 I've **stopped** the song!", color = nextcord.Color.red())
         await ctx.reply(embed=embed, mention_author=False)
@@ -132,7 +156,7 @@ class Music(commands.Cog):
         if ctx.voice_client is None:
             if ctx.author.voice:
                 await ctx.author.voice.channel.connect()
-                embed=nextcord.Embed(description=f"➕ I am now **in** your voice channel!", color = nextcord.Color.green())
+                embed=nextcord.Embed(description=f":lock: I am now **in** your voice channel!", color = nextcord.Color.green())
        	        await ctx.reply(embed=embed, mention_author=False)
             else:
                 embed=nextcord.Embed(description=f"🛑 You are not **in** a voice channel! Kindly join one.", color = nextcord.Color.red())
@@ -158,7 +182,6 @@ class Music(commands.Cog):
        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
        
-
 # Set bot prefix
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("niko "), help_command=None)
@@ -188,12 +211,12 @@ class HelpDropdown(nextcord.ui.Select):
         if self.values[0] == '🎵 Music':
             embed=nextcord.Embed(title="Music commands",description="Here's a list of all my music commands.", color = nextcord.Colour.green())
             embed.add_field(name = "🎶 niko stream", value = "Play a song.")
-            embed.add_field(name = "➕ niko join", value = "Niko joins your VC.")
-            embed.add_field(name = "➖ niko leave", value = "Niko leaves your VC.")
+            embed.add_field(name = ":lock: niko join", value = "Niko joins your VC.")
+            embed.add_field(name = "🔓niko leave", value = "Niko leaves your VC.")
             embed.add_field(name = "⏸️ niko pause", value = "Niko pauses the song.")
             embed.add_field(name = "▶️ niko resume", value = "Niko resumes the song.")
             embed.add_field(name = "🛑 niko stop", value = "Niko stops the song.")
-            embed.add_field(name = "📜 niko lyrics", value = "Fi	nd lyrics on most songs!")
+            embed.add_field(name = "📜 niko lyrics", value = "Find lyrics on most songs!")
             embed.add_field(name = "📩 niko invite", value = "Invite me to other servers!")
             return await interaction.response.edit_message(embed=embed)
 
@@ -220,19 +243,19 @@ async def help(ctx):
 @bot.command()
 @commands.cooldown(5, 30, commands.BucketType.user)
 async def lyrics(ctx, *, title):
-    genius = lyricsgenius.Genius("GENUISTOKEN")
+    genius = lyricsgenius.Genius("GENUIS TOKEN")
     genius.verbose = False
     genius.remove_section_headers = True
     genius.skip_non_songs = True
     song = genius.search_song(f"{title}")
     test_stirng = f"{song.lyrics}"
-    embed1=nextcord.Embed(description="🔍 Searching for lyrics... please wait!")
+    embed1=nextcord.Embed(description=":mag: Searching for lyrics... please wait!")
     msg = await ctx.reply(embed=embed1, mention_author=False)
     total = 1
     for i in range(len(test_stirng)):
      if(test_stirng[i] == ' ' or test_stirng == '\n' or test_stirng == '\t'):
       	total = total + 1
-    if total > 1000:
+    if total > 750:
       embed=nextcord.Embed(description=f"🛑 Sorry! The number of characters in **{title}** exceeds Discord's character limit! (2000 characters). There's nothing I can do :pensive: ")
       await asyncio.sleep(1)
       await msg.edit(embed=embed)
@@ -243,7 +266,7 @@ async def lyrics(ctx, *, title):
 # Error handling for lyrics
 
 @lyrics.error       
-async def on_command_error(self, ctx, error):
+async def on_command_error(ctx, error):
   if isinstance(error, commands.MissingRequiredArgument):
     embed=nextcord.Embed(title="🛑 You gotta be kidding me!",description ="Which songs lyrics do you want?", color=nextcord.Colour.red())
     await ctx.reply(embed=embed, mention_author=False)
@@ -259,6 +282,5 @@ async def invite(ctx):
 	embed=nextcord.Embed(description="Here are some of my **Related Links!**")
 	await ctx.reply(embed=embed,mention_author=False, view=helplink)
 
-
 bot.add_cog(Music(bot))
-bot.run('TOKEN')
+bot.run('BOT TOKEN')
