@@ -1,47 +1,51 @@
+import math
+import time
 from math import floor
 from discord.ext import commands
 import discordSuperUtils
 from discordSuperUtils import MusicManager
 import discord
 from discord_components import DiscordComponents, ComponentsBot, Button, Select, SelectOption
+import lyricsgenius
+import asyncio
 
 client_id = "CLIENTID"
 client_secret = "CLIENTSECRET"
 
 bot = commands.Bot(command_prefix="niko ", intents=discord.Intents.all(), help_command=None)
 DiscordComponents(bot)
-#MusicManager = MusicManager(bot, spotify_support=True)
-
 
 MusicManager = MusicManager(
     bot, client_id=client_id, client_secret=client_secret, spotify_support=True
 )
 
-# if using spotify support use this instead ^^^
-
 @MusicManager.event()
 async def on_music_error(ctx, error):
     embed = discord.Embed(description=f"❌️ {error}")
     await ctx.reply(embed=embed, mention_author=False)
-    raise error  # add your error handling here! Errors are listed in the documentation.
+    raise error  
 
 @MusicManager.event()
 async def on_queue_end(ctx):
-    embed = discord.Embed(description=f"❌️ The queue is **over**! Maybe get another song?")
+    embed = discord.Embed(description=f"❌️ The queue is **over**! Maybe find another song?")
     await ctx.reply(embed=embed, mention_author=False)
-    # You could wait and check activity, etc...
 
 @MusicManager.event()
 async def on_inactivity_disconnect(ctx):
+    time.sleep(30)
     embed = discord.Embed(description=f"❌️ Seems that this VC is **inactive**... I'mma head out.")
-    await ctx.reply(embed=embed, mention_author=False)
+    await ctx.send(embed=embed)
 
 @MusicManager.event()
 async def on_play(ctx, player):
     embed = discord.Embed(description=f":notes: Now playing **{player}**")
+    await MusicManager.volume(ctx, 100)
     channel = ctx.author.voice.channel.id
     embed.add_field(name = ":point_down: Click Here To Listen Along!", value =f"<#{channel}>", inline = False)
+    embed.set_footer(text = "Tip: If the volume isn't high enough for you, change it with niko volume 10/20/30 etc.")
     await ctx.reply(embed=embed, mention_author=False)
+    channel = bot.get_channel(918347985937645609)
+    await channel.send(f"Somebody is playing `{player}` in `{ctx.message.guild.name}`")
 
 @bot.event
 async def on_ready():
@@ -50,27 +54,38 @@ async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=f"niko help in {len(bot.guilds)} servers!"))
     for guild in bot.guilds:
       print(guild.name)
-    print("Niko Muisc is ready.", bot.user)
+    print("Niko Music is ready.", bot.user)
+
+@bot.event
+async def on_guild_join(guild):
+    channel = bot.get_channel(918347985937645609)
+    await channel.send(f"I have just joined `{guild.name}`!! I am now in `{len(bot.guilds)}` servers!")
 
 @bot.command()
 async def leave(ctx):
     if await MusicManager.leave(ctx):
-        embed = discord.Embed(description=f"🔓️ I have **left** your VC! Bye I guess :(")
+        embed = discord.Embed(description=f":wave: I have **left** your VC! Bye I guess :(")
         await ctx.reply(embed=embed, mention_author=False)
+    channel = bot.get_channel(918347985937645609)
+    await channel.send(f"Left VC in `{ctx.message.guild.name}`")
 
 @bot.command()
 async def np(ctx):
     if player := await MusicManager.now_playing(ctx):
      duration_played = await MusicManager.get_player_played_duration(ctx, player)
      embed = discord.Embed(description=f":notes: Currently playing **{player}**")
-     embed.add_field(name = ":alarm_clock: Duration Played", value = f"**{duration_played}**/**{player.duration}** seconds!", inline = False)
+     duration1=math.trunc(duration_played)
+     duration2=math.trunc(player.duration)
+     embed.add_field(name = ":alarm_clock: Duration Played", value = f"**{duration1}**/**{duration2}** seconds!", inline = False)
      await ctx.reply(embed=embed, mention_author=False)
 
 @bot.command()
 async def join(ctx):
     if await MusicManager.join(ctx):
-         embed = discord.Embed(description=f"🔒️ I have **joined** your VC! Whats up?")
+         embed = discord.Embed(description=f":wave: I have **joined** your VC! Whats up?")
          await ctx.reply(embed=embed, mention_author=False)
+    channel = bot.get_channel(918347985937645609)
+    await channel.send(f"Joined VC in `{ctx.message.guild.name}`")
 
 @bot.command()
 async def play(ctx, *, query: str):
@@ -93,36 +108,27 @@ async def play(ctx, *, query: str):
 
 
 @bot.command()
-async def lyrics(ctx, query: str = None):
-    if response := await MusicManager.lyrics(ctx, query):
-        title, author, query_lyrics = response
-
-        splitted = query_lyrics.split("\n")
-        res = []
-        current = ""
-        for i, split in enumerate(splitted):
-            if len(splitted) <= i + 1 or len(current) + len(splitted[i + 1]) > 1024:
-                res.append(current)
-                current = ""
-                continue
-            current += split + "\n"
-
-        page_manager = discordSuperUtils.PageManager(
-            ctx,
-            [
-                discord.Embed(
-                    title=f":scroll: Lyrics for '{title}' by '{author}', (Page {i + 1}/{len(res)})",
-                    description=x,
-                )
-                for i, x in enumerate(res)
-            ],
-            public=True,
-        )
-        await page_manager.run()
-    else:
-        embed = discord.Embed(description="❌️ Maybe I'm too dumb but I couldn't find any lyrics for that-")
-        await ctx.reply(embed=embed, mention_author=False)
-
+@commands.cooldown(5, 30, commands.BucketType.user)
+async def lyrics(ctx, *, title):
+    genius = lyricsgenius.Genius("GENUIS TOKEN")
+    genius.verbose = False
+    genius.remove_section_headers = True
+    genius.skip_non_songs = True
+    song = genius.search_song(f"{title}")
+    test_stirng = f"{song.lyrics}"
+    embed1=discord.Embed(description=":mag: Searching for lyrics... please wait!")
+    msg = await ctx.reply(embed=embed1, mention_author=False)
+    total = 1
+    for i in range(len(test_stirng)):
+     if(test_stirng[i] == ' ' or test_stirng == '\n' or test_stirng == '\t'):
+      	total = total + 1
+    if total > 750:
+      embed=discord.Embed(description=f"🛑 Sorry! The number of characters in **{title}** exceeds Discord's character limit! (6000 characters). There's nothing I can do :pensive: ")
+      await asyncio.sleep(1)
+      await msg.edit(embed=embed)
+    await asyncio.sleep(3)
+    embed2=discord.Embed(title=f"📜 Lyrics for **{title}**!" ,description=f"{song.lyrics}")
+    await msg.edit(embed=embed2)
 
 @bot.command()
 async def pause(ctx):
@@ -146,19 +152,20 @@ async def stop(ctx):
 async def volume(ctx, volume: int):
     await MusicManager.volume(ctx, volume)
 
-
 @bot.command()
 async def loop(ctx):
     is_loop = await MusicManager.loop(ctx)
     if is_loop is not None:
-        embed = discord.Embed(description=f"Looping is now **{is_loop}**")
+        embed = discord.Embed(description=f":repeat: Looping is now **{is_loop}**")
+        embed.set_footer(text = "Tip: Type this command again to disable/enable the loop.")
         await ctx.reply(embed=embed, mention_author=False)
-
 
 @bot.command()
 async def shuffle(ctx):
+    is_shuffle = await MusicManager.shuffle(ctx)
     if is_shuffle is not None:
-        embed = discord.Embed(description=f"Shuffle is now **{is_shuffle}**")
+        embed = discord.Embed(description=f"🃏️ Shuffle is now **{is_shuffle}**")
+        embed.set_footer(text = "Tip: Type this command again to disable/enable shuffling.")
         await ctx.reply(embed=embed, mention_author=False)
 
 @bot.command()
@@ -166,13 +173,15 @@ async def autoplay(ctx):
     is_autoplay = await MusicManager.autoplay(ctx)
 
     if is_autoplay is not None:
-        embed = discord.Embed(description=f"*Autoplay is now **{is_autoplay}**")
+        embed = discord.Embed(description=f"*:arrow_forward: Autoplay is now **{is_autoplay}**")
+        embed.set_footer(text = "Tip: Type this command again to disable/enable autoplaying.")
         await ctx.reply(embed=embed, mention_author=False)
 
 @bot.command()
 async def queueloop(ctx):
     if is_loop is not None:
         embed = discord.Embed(description=f"*Queue Looping is now **{is_loop}**")
+        embed.set_footer(text = "Tip: Type this command again to disable/enable queue looping.")
         await ctx.reply(embed=embed, mention_author=False)
 
 
@@ -263,7 +272,7 @@ async def help(ctx):
     embed.add_field(name = "🔓niko leave", value = "Niko leaves your VC.")
     embed.add_field(name = "⏸️ niko pause", value = "Niko pauses the song.")
     embed.add_field(name = "▶️ niko resume", value = "Niko resumes the song.")
-    embed.add_field(name = ":loop: niko loop", value = "Niko loops your requested song.")
+    embed.add_field(name = ":repeat: niko loop", value = "Niko loops your requested song.")
     embed.add_field(name = ":loop: niko queueloop", value = "Niko loops all songs currently in the queue.")
     embed.add_field(name = " ▶️ niko autoplay", value = "Niko plays the next recommended song.")
     embed.add_field(name = " :scroll: niko queue", value = "Niko shows you the queue.")
@@ -274,6 +283,7 @@ async def help(ctx):
     embed.add_field(name = "🃏️ niko shuffle", value = "Niko plays a random song from the queue.")
     embed.add_field(name = "🛑 niko stop", value = "Niko stops the song.")
     embed.add_field(name = ":abc: niko lyrics", value = "Niko finds lyrics on most songs!")
+    embed.add_field(name = ":rewind: niko rewind", value = "Niko rewinds the song from the start.")
     embed.add_field(name = "📩 niko invite", value = "Invite niko to other servers!")
     await interaction.edit_origin(embed=embed)
 
@@ -290,4 +300,4 @@ async def invite(ctx):
      ]
     )
 
-bot.run("BOT TOKEN")
+bot.run("TOKEN")
