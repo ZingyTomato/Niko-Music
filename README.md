@@ -1,2 +1,2 @@
 # Niko-Music
-A new version of Niko meant specifically for music
+A free and open source discord bot with no pay-wall. Made using lavalink, discord.py and Caraberaa's tutorial series on Youtube. Just type `niko help` in a server to find out more!
