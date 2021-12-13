@@ -4,8 +4,11 @@ import discord
 from discord.ext import commands
 from discord import Webhook, AsyncWebhookAdapter
 
-
-
+async def sendToWebhook(content):
+ async with aiohttp.ClientSession() as session:
+   webhook = Webhook.from_url('WEBHOOKURL',   adapter=AsyncWebhookAdapter(session))
+   await webhook.send(content)
+  
 class MusicBot(commands.Bot):
     def __init__(self):
         self._cogs = [p.stem for p in Path(".").glob("./bot/cogs/*.py")]
@@ -71,11 +74,6 @@ class MusicBot(commands.Bot):
      for guild in bot.guilds:
        print(guild.name)
      print("Niko Music is ready.", bot.user)
-    
-    async def sendToWebhook(content):
-     async with aiohttp.ClientSession() as session:
-      webhook = Webhook.from_url('WEBHOOKURL',   adapter=AsyncWebhookAdapter(session))
-     await webhook.send(content)
     
     async def on_guild_join(bot, guild):
      general = find(lambda x: x.name == 'general',  guild.text_channels)
