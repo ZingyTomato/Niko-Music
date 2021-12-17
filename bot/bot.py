@@ -3,12 +3,15 @@ from discord.utils import find
 import discord
 from discord.ext import commands
 from discord import Webhook, AsyncWebhookAdapter
+import aiohttp
+
+
 
 async def sendToWebhook(content):
  async with aiohttp.ClientSession() as session:
    webhook = Webhook.from_url('WEBHOOKURL',   adapter=AsyncWebhookAdapter(session))
    await webhook.send(content)
-  
+
 class MusicBot(commands.Bot):
     def __init__(self):
         self._cogs = [p.stem for p in Path(".").glob("./bot/cogs/*.py")]
@@ -75,9 +78,10 @@ class MusicBot(commands.Bot):
        print(guild.name)
      print("Niko Music is ready.", bot.user)
     
+    
     async def on_guild_join(bot, guild):
      general = find(lambda x: x.name == 'general',  guild.text_channels)
      if general and general.permissions_for(guild.me).send_messages:
-      embed=discord.Embed(description="Thanks for inviting me! Type `niko help` to find out more!")
+      embed=discord.Embed(description=":wave: Thanks for inviting me! Type `niko help` to find out more!")
       await general.send(embed=embed)
       await sendToWebhook(content=f"Niko has just joined `{guild.name}`!! He is now in `{len(bot.guilds)}` servers!")
