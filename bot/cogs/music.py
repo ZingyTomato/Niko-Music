@@ -22,7 +22,6 @@ async def sendToWebhook(content):
     await webhook.send(content)
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
-LYRICS_URL = "https://some-random-api.ml/lyrics?title="
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
 OPTIONS = {
     "1️⃣": 0,
@@ -289,15 +288,16 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     async def start_nodes(self):
         await self.bot.wait_until_ready()
-
+        
         nodes = {
             "MAIN": {
-                "host": "linklava.cjstevenson.com",
-                "port": 25503,
-                "rest_uri": "http://linklava.cjstevenson.com:25503",
-                "password": "lookbehindyou",
+                "host": "lavalink.devin-dev.xyz",
+                "port": 443,
+                "rest_uri": "https://lavalink.devin-dev.xyz",
+                "password": "lava123",
                 "identifier": "MAIN",
-                "region": "eu",
+                "region": "us_central",
+                "secure": True,
             }
         }
 
@@ -312,7 +312,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             return self.wavelink.get_player(obj.id, cls=Player)
 
     @commands.command(name="connect", aliases=["join"])
-    async def connect_command(self, ctx, *, channel: t.Optional[discord.VoiceChannel]):
+    async def connect_command(self, ctx: SlashContext, *,channel: t.Optional[discord.VoiceChannel]):
         player = self.get_player(ctx)
         await ctx.guild.change_voice_state(channel = ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
         chanid = ctx.author.voice.channel.id
@@ -330,7 +330,6 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         elif isinstance(exc, NoVoiceChannel):
             embed=discord.Embed(description=f":no_entry_sign: Sorry, you are not currently **in** a voice channel.", color=discord.Colour.red())
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            await ctx.reply(embed=embed, mention_author=False)
             
     @commands.command(name="disconnect", aliases=["leave"])
     async def disconnect_command(self, ctx):
@@ -341,27 +340,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         await ctx.reply(embed=embed, mention_author=False)
         await sendToWebhook(content=f"Left VC in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         
-        
-    @commands.command(name="play")
-    async def play_command(self, ctx, *, query: t.Optional[str]):
-        player = self.get_player(ctx)
-
-        if not player.is_connected:
-            await ctx.guild.change_voice_state(channel=ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
-
-        if query is None:
-            if player.queue.is_empty:
-                raise QueueIsEmpty
-
-        else:
-            query = query.strip("<>")
-            if not re.match(URL_REGEX, query):
-                query = f"ytsearch:{query}"
-            await player.add_tracks(ctx, await self.wavelink.get_tracks(query))	
-            await sendToWebhook(content=f"``{ctx.author.name}`` is playing ``{player.queue.current_track.title}`` by ``{player.queue.current_track.author}`` in ``{ctx.message.guild.name}`` which is ``{player.queue.current_track.length}`` seconds long!")
             
-    @commands.command(name="soundcloud",pass_context=True)	
-    async def play1_command(self, ctx, *, query: t.Optional[str]):
+    @commands.command(name="play",pass_context=True)	
+    async def play_command(self, ctx, *, query: t.Optional[str]):
         player = self.get_player(ctx)
 
         if not player.is_connected:
@@ -384,18 +365,6 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             
     @play_command.error
     async def play_command_error(self, ctx, exc):
-        if isinstance(exc, QueueIsEmpty):
-            embed=discord.Embed(description=f":no_entry_sign: Sorry! The queue is currently **empty**!", color=discord.Colour.red())
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            embed.set_footer(text="Tip : You can add a song to the queue by playing a song by typing `niko play songname`")
-            await ctx.reply(embed=embed, mention_author=False)	
-        elif isinstance(exc, NoVoiceChannel):
-            embed=discord.Embed(description=f":no_entry_sign: Sorry, you are not currently **in** a voice channel.", color=discord.Colour.red())
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            await ctx.reply(embed=embed, mention_author=False)
-            
-    @play1_command.error
-    async def play1_command_error(self, ctx, exc):
         if isinstance(exc, QueueIsEmpty):
             embed=discord.Embed(description=f":no_entry_sign: Sorry! The queue is currently **empty**!", color=discord.Colour.red())
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
@@ -459,6 +428,11 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed.set_footer(text="Tip : You can check the current queue with `niko queue`")
         await ctx.reply(embed=embed, mention_author=False)
         await sendToWebhook(content=f"Skipped song in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
+        if player.queue.current_track.length == 30000:
+         embed=discord.Embed(description=":no_entry_sign: Sorry! This song is currently blocked in my region by soundcloud :pensive:", color=discord.Colour.red())
+         await ctx.reply(embed=embed, mention_author=False)
+         await player.stop()
+
         
     @next_command.error
     async def next_command_error(self, ctx, exc):
@@ -484,6 +458,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed.set_footer(text="Tip : You can check the current queue by typing `niko queue`")
         await ctx.reply(embed=embed, mention_author=False)
         await sendToWebhook(content=f"Playing previous track in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
+        if player.queue.current_track.length == 30000:
+         embed=discord.Embed(description=":no_entry_sign: Sorry! This song is currently blocked in my region by soundcloud :pensive:", color=discord.Colour.red())
+         await ctx.reply(embed=embed, mention_author=False)
+         await player.stop()
           
     @previous_command.error
     async def previous_command_error(self, ctx, exc):
@@ -706,6 +684,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed=discord.Embed(description=f":notes: I'm playing the track in position **{index}**", color=discord.Colour.green())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         await ctx.reply(embed=embed, mention_author=False)
+        if player.queue.current_track.length == 30000:
+         embed=discord.Embed(description=":no_entry_sign: Sorry! This song is currently blocked in my region by soundcloud :pensive:", color=discord.Colour.red())
+         await ctx.reply(embed=embed, mention_author=False)
+         await player.stop()
 
     @skipto_command.error
     async def skipto_command_error(self, ctx, exc):
@@ -861,7 +843,6 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           embed.add_field(name = ":loudspeaker: niko eq help", value = "Niko changes the song filter based on a set of presets!")
           embed.add_field(name = ":rewind: niko replay", value = "Niko rewinds the song from the start.")
           embed.add_field(name = "📩 niko invite", value = "Invite niko to other servers!")
-          embed.add_field(name = "(Experimental) niko soundcloud", value = "Niko plays music from soundcloud instead of Youtube. Doesn't have many songs.")
           await ctx.send(embed=embed)
     
 def setup(bot):
