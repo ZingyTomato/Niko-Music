@@ -84,4 +84,6 @@ class MusicBot(commands.Bot):
      if general and general.permissions_for(guild.me).send_messages:
       embed=discord.Embed(description=":wave: Thanks for inviting me! Type `niko help` to find out more!")
       await general.send(embed=embed)
-      await sendToWebhook(content=f"Niko has just joined `{guild.name}`!! He is now in `{len(bot.guilds)}` servers!")
+      channel = self.bot.get_channel(918347985937645609)
+      embed=discord.Embed(description=f"Niko has just joined `{guild.name}`!! He is now in `{len(bot.guilds)}` servers!")
+      await channel.send(embed=embed)
