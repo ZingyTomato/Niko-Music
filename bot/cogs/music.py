@@ -1,6 +1,6 @@
 import discord
 import wavelink
-from discord.ext import commands
+from discord.ext import commands 
 import typing as t
 import asyncio
 import re
@@ -15,11 +15,8 @@ from discord_slash import cog_ext, SlashContext, SlashCommand
 from discord_slash.utils.manage_components import create_button, create_actionrow
 from discord_slash.model import ButtonStyle
 from discord_slash.utils.manage_components import create_select, create_select_option, create_actionrow
-
-async def sendToWebhook(content):
- async with aiohttp.ClientSession() as session:
-    webhook = Webhook.from_url('WEB HOOK URL',   adapter=AsyncWebhookAdapter(session))
-    await webhook.send(content)
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
@@ -263,7 +260,6 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         if not member.bot and after.channel is None:
             if not [m for m in before.channel.members if not m.bot]:
                 await self.get_player(member.guild).teardown()
-                await sendToWebhook(content=f"Left the VC as it is empty!")
                
 
     @wavelink.WavelinkMixin.listener()
@@ -326,6 +322,8 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="disconnect", aliases=["leave"])
     async def disconnect_command(self, ctx):
         player = self.get_player(ctx)
+        player.queue.empty()
+        await player.stop()
         await player.teardown()
         embed=discord.Embed(description=f":wave: I have just **left** your VC!", color=discord.Colour.green())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
@@ -352,6 +350,29 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         if not player.is_connected:
             await ctx.guild.change_voice_state(channel=ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
 
+        query = query.strip("<>")
+        if "youtube" in query:
+          embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
+          return await ctx.reply(embed=embed, mention_author=False)
+        if "https://open.spotify.com/playlist" in query:
+         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
+         playlist_link = f"{query}"
+         playlist_URI = playlist_link.split("/")[-1].split("?")[0]
+         print(playlist_URI)
+         track_uris = [x["track"]["uri"] for x in sp.playlist_tracks(playlist_URI)["items"]]
+         for track in sp.playlist_tracks(playlist_URI)["items"]:
+          track_name = track["track"]["name"]
+          query = f"scsearch:{track_name}"
+          await player.add_tracks(ctx, await self.wavelink.get_tracks(query))	
+        if "https://open.spotify.com/album" in query:
+         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
+         album_link = f"{query}"
+         album_id= album_link.split("/")[-1].split("?")[0]
+         for track in sp.album_tracks(album_id)["items"]:
+          track_name = track["name"]
+          query = f"scsearch:{track_name}"
+          await player.add_tracks(ctx, await self.wavelink.get_tracks(query))
+           
         if query is None:
             if player.queue.is_empty:
                 raise QueueIsEmpty
@@ -778,7 +799,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             
     @commands.command(name="lyrics")
     async def lyrics_command(self, ctx, *, title):
-     genius = lyricsgenius.Genius("GENIUS API KEY")
+     genius = lyricsgenius.Genius("LYRICS GENIUS API")
      genius.verbose = False
      genius.remove_section_headers = True
      genius.skip_non_songs = True
