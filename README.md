@@ -1,6 +1,6 @@
 # Niko-Music
 
-A free and open source discord bot with no pay-wall. Made using lavalink, discord.py, discord-components, lyricsgenius, and Carabera's tutorial series on Youtube. Can play audio from Soundcloud, Bandcamp, Twitch and Vimeo! Defaults to Soundcloud. Just type `niko help` in a server to find out more!
+A free and open source discord bot with no pay-wall. Made using lavalink, discord.py, discord-components, lyricsgenius, and Carabera's tutorial series on Youtube. Supports Soundcloud, Spotify, Bandcamp, Twitch and Vimeo! Defaults to Soundcloud. Just type `niko help` in a server to find out more!
 
 ## Installation Instructions
 
@@ -26,9 +26,14 @@ In `music.py`, replace GENIUS API KEY with the key you get from here : http://ge
 
 ![image](https://user-images.githubusercontent.com/79736973/146800764-0bb75ca1-b5dc-437a-b1fa-5d22c50fa8a2.png)
 
-Finally, in `music.py`, replace the invite URL with your bot's invite URL.
+In `music.py`, replace the invite URL with your bot's invite URL.
 
 ![image](https://user-images.githubusercontent.com/79736973/146800875-2499a93e-643c-40b4-9a47-232e311d4d95.png)
+
+Finally in `music.py`, replace SPOT CLIENT ID and SPOT CLIENT SECRET with the values you get from here : https://developer.spotify.com/dashboard
+
+![image](https://user-images.githubusercontent.com/79736973/146968227-ead30cc2-f692-4e0c-8ba7-de8fd625cc85.png)
+
 
 ### Bring the bot up
 
