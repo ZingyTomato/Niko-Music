@@ -20,13 +20,6 @@ from spotipy.oauth2 import SpotifyClientCredentials
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
-OPTIONS = {
-    "1️⃣": 0,
-    "2⃣": 1,
-    "3⃣": 2,
-    "4⃣": 3,
-    "5⃣": 4,
-}
 
 class AlreadyConnectedToChannel(commands.CommandError):
     pass
@@ -181,58 +174,22 @@ class Player(wavelink.Player):
 
         if isinstance(tracks, wavelink.TrackPlaylist):
             self.queue.add(*tracks.tracks)
-        elif len(tracks) == 1:
+
+        elif len(f"{tracks}".split('\n'))== 1:
             self.queue.add(tracks[0])
             embed=discord.Embed(description=f":notes: **{tracks[0].title}** has been added to the queue!", color=discord.Colour.green())
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            embed.set_footer(text="Tip : Check the current queue with `niko queue` , Check what's currently playing with `niko np`, Adjust the songs volume with `niko volume up/down`!")
+            embed.set_footer(text="Check the current queue with `niko queue`")
             await ctx.reply(embed=embed, mention_author=False)
         else:
             if (track := await self.choose_track(ctx, tracks)) is not None:
                 self.queue.add(track)
-                embed=discord.Embed(description=f":notes: **{track.title}** has been added to the queue!", color=discord.Colour.green())
-                embed.set_footer(text="Tip : Check the current queue with `niko queue` , Check what's currently playing with `niko np`, Adjust the songs volume with `niko volume up/down!`")		
-                embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-                await ctx.reply(embed=embed, mention_author=False)
 
         if not self.is_playing:
             await self.start_playback()
             
     async def choose_track(self, ctx, tracks):
-        def _check(r, u):
-            return (
-                r.emoji in OPTIONS.keys()
-                and u == ctx.author
-                and r.message.id == msg.id
-            )
-
-        embed = discord.Embed(
-            title=":scroll: Kindly pick a song from the list!",
-            description=(
-                "\n".join(
-                    f"**{i+1}.** {t.title} ({t.length//60000}:{str(t.length%60).zfill(2)})"
-                    for i, t in enumerate(tracks[:5])
-                )
-            ),
-            colour=discord.Colour.green()
-        )
-        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-        embed.set_footer(text="Please wait for the reactions to load before clicking on an option!")
-
-        msg = await ctx.reply(embed=embed, mention_author=False)
-        for emoji in list(OPTIONS.keys())[:min(len(tracks), len(OPTIONS))]:
-            await msg.add_reaction(emoji)
-
-        try:
-            reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=_check)
-        except asyncio.TimeoutError:
-            embed=discord.Embed(description=":no_entry_sign: Timeout! You were too **late** to reply!")
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            await msg.edit(embed=embed)
-            await ctx.message.edit()
-        else:
-            await msg.delete()
-            return tracks[OPTIONS[reaction.emoji]]
+            return tracks[0]
 
     async def start_playback(self):
         await self.play(self.queue.current_track)
@@ -292,7 +249,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                 "rest_uri": "https://lavalink.devin-dev.xyz",
                 "password": "lava123",
                 "identifier": "MAIN",
-                "region": "us_central",
+                "region": "asia",
                 "secure": True,
             }
         }
@@ -351,7 +308,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             await ctx.guild.change_voice_state(channel=ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
 
         query = query.strip("<>")
-        if "youtube" in query:
+        if "https://youtube.com" in query:
           embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
           return await ctx.reply(embed=embed, mention_author=False)
         if "https://open.spotify.com/playlist" in query:
@@ -365,13 +322,16 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           query = f"scsearch:{track_name}"
           await player.add_tracks(ctx, await self.wavelink.get_tracks(query))	
         if "https://open.spotify.com/album" in query:
-         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
+         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIIENT ID",client_secret="SPOIT CLIENT SECRET"))
          album_link = f"{query}"
          album_id= album_link.split("/")[-1].split("?")[0]
          for track in sp.album_tracks(album_id)["items"]:
           track_name = track["name"]
           query = f"scsearch:{track_name}"
           await player.add_tracks(ctx, await self.wavelink.get_tracks(query))
+        if "https://dezzer.com" in query:
+          embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify Playlists and Albums (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
+          return await ctx.reply(embed=embed, mention_author=False)
            
         if query is None:
             if player.queue.is_empty:
@@ -799,7 +759,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             
     @commands.command(name="lyrics")
     async def lyrics_command(self, ctx, *, title):
-     genius = lyricsgenius.Genius("LYRICS GENIUS API")
+     genius = lyricsgenius.Genius("GENIUS API KEY")
      genius.verbose = False
      genius.remove_section_headers = True
      genius.skip_non_songs = True
