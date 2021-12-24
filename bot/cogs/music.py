@@ -9,12 +9,6 @@ import random
 from enum import Enum
 import aiohttp
 import lyricsgenius
-from discord_components import DiscordComponents, ComponentsBot, Button, Select, SelectOption
-from discord import Webhook, AsyncWebhookAdapter
-from discord_slash import cog_ext, SlashContext, SlashCommand
-from discord_slash.utils.manage_components import create_button, create_actionrow
-from discord_slash.model import ButtonStyle
-from discord_slash.utils.manage_components import create_select, create_select_option, create_actionrow
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
@@ -835,12 +829,8 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         
     @commands.command(name="invite")
     async def invite(self, ctx):
-      buttons = [
-    create_button(style=5, label="📩 Invite me!", url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands"),
-]
-      action_row = create_actionrow(*buttons)
-      embed=discord.Embed(description=":wave:  Click the button below to **invite** me to other servers!")
-      await ctx.reply(embed=embed, components=[action_row], mention_author=False)
+      embed=discord.Embed(description="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", color=discord.Colour.green())
+      await ctx.reply(embed=embed, mention_author=False)
           
     @commands.command(name="help")
     async def help(self, ctx):
