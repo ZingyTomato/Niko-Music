@@ -18,6 +18,7 @@ from discord_slash.utils.manage_components import create_select, create_select_o
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
 
@@ -145,7 +146,7 @@ class Queue:
             self.repeat_mode = RepeatMode.QUEUE
 
     def empty(self):
-        self.position = 0
+        self.position = 100
 
 class Player(wavelink.Player):
     def __init__(self, *args, **kwargs):
@@ -170,7 +171,9 @@ class Player(wavelink.Player):
 
     async def add_tracks(self, ctx, tracks):
         if not tracks:
-            raise NoTracksFound
+            embed=discord.Embed(description="Sorry, I couldn't find any songs with that title! Make sure to include the artists name as well.", color=discord.Colour.red())
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            await ctx.reply(embed=embed, mention_author=False)
 
         if isinstance(tracks, wavelink.TrackPlaylist):
             self.queue.add(*tracks.tracks)
@@ -244,12 +247,12 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         
         nodes = {
             "MAIN": {
-                "host": "lavalink.devin-dev.xyz",
+                "host": "lavalink.devz.cloud",
                 "port": 443,
-                "rest_uri": "https://lavalink.devin-dev.xyz",
-                "password": "lava123",
+                "rest_uri": "https://lavalink.devz.cloud",
+                "password": "mathiscool",
                 "identifier": "MAIN",
-                "region": "asia",
+                "region": "us_central",
                 "secure": True,
             }
         }
@@ -308,28 +311,31 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             await ctx.guild.change_voice_state(channel=ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
 
         query = query.strip("<>")
-        if "https://youtube.com" in query:
+        if "youtube" in query:
           embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
           return await ctx.reply(embed=embed, mention_author=False)
         if "https://open.spotify.com/playlist" in query:
          sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
          playlist_link = f"{query}"
          playlist_URI = playlist_link.split("/")[-1].split("?")[0]
-         print(playlist_URI)
          track_uris = [x["track"]["uri"] for x in sp.playlist_tracks(playlist_URI)["items"]]
          for track in sp.playlist_tracks(playlist_URI)["items"]:
           track_name = track["track"]["name"]
-          query = f"scsearch:{track_name}"
+          track_artist = track["track"]["artists"][0]["name"]
+          queryfinal = f"{track_name} " + " " + f"{track_artist}" 
+          query = f"scsearch:{queryfinal}"
           await player.add_tracks(ctx, await self.wavelink.get_tracks(query))	
-        if "https://open.spotify.com/album" in query:
-         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIIENT ID",client_secret="SPOIT CLIENT SECRET"))
+        if "https://open.spotify.com/album" in query:	
+         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
          album_link = f"{query}"
          album_id= album_link.split("/")[-1].split("?")[0]
          for track in sp.album_tracks(album_id)["items"]:
           track_name = track["name"]
-          query = f"scsearch:{track_name}"
-          await player.add_tracks(ctx, await self.wavelink.get_tracks(query))
-        if "https://dezzer.com" in query:
+          track_artist = track["artists"][0]["name"]
+          queryfinal = f"{track_name} " + " " + f"{track_artist}" 
+          query = f"scsearch:{queryfinal}"
+          await player.add_tracks(ctx, await self.wavelink.get_tracks(query))	
+        if "https://deezer.com" in query:
           embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify Playlists and Albums (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
           return await ctx.reply(embed=embed, mention_author=False)
            
@@ -340,8 +346,15 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         else:
             query = query.strip("<>")
             if not re.match(URL_REGEX, query):
-                query = f"scsearch:{query}"
-            await player.add_tracks(ctx, await self.wavelink.get_tracks(query))	
+                sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
+                results = sp.search(q=f'{query}', limit=1)
+                for idx, track in enumerate(results['tracks']['items']):
+                  querytrack = track['name']
+                  queryartist = track["artists"][0]["name"]
+                  queryfinal = f"{querytrack}" + " " +  f"{queryartist}"
+                  print(queryfinal)
+                  querysearch = f"scsearch:{queryfinal}"
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(querysearch))	
             if player.queue.current_track.length == 30000:
                 embed=discord.Embed(description=":no_entry_sign: Sorry! This song is currently blocked in my region by soundcloud :pensive:", color=discord.Colour.red())
                 await ctx.reply(embed=embed, mention_author=False)
@@ -399,8 +412,8 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="stop")
     async def stop_command(self, ctx):
         player = self.get_player(ctx)
-        player.queue.empty()
         await player.stop()
+        player.queue.empty()
         embed=discord.Embed(description=":no_entry_sign: I've just **stopped** the currently playing song!", color=discord.Colour.red())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         await ctx.reply(embed=embed, mention_author=False)
