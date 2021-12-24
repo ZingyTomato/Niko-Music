@@ -2,15 +2,8 @@ from pathlib import Path
 from discord.utils import find
 import discord
 from discord.ext import commands
-from discord import Webhook, AsyncWebhookAdapter
 import aiohttp
 
-
-
-async def sendToWebhook(content):
- async with aiohttp.ClientSession() as session:
-   webhook = Webhook.from_url('WEBHOOKURL',   adapter=AsyncWebhookAdapter(session))
-   await webhook.send(content)
 
 class MusicBot(commands.Bot):
     def __init__(self):
@@ -84,6 +77,6 @@ class MusicBot(commands.Bot):
      if general and general.permissions_for(guild.me).send_messages:
       embed=discord.Embed(description=":wave: Thanks for inviting me! Type `niko help` to find out more!")
       await general.send(embed=embed)
-      channel = self.bot.get_channel(918347985937645609)
+      channel = bot.get_channel(918347985937645609)
       embed=discord.Embed(description=f"Niko has just joined `{guild.name}`!! He is now in `{len(bot.guilds)}` servers!")
       await channel.send(embed=embed)
