@@ -75,8 +75,9 @@ class MusicBot(commands.Bot):
     async def on_guild_join(bot, guild):
      general = find(lambda x: x.name == 'general',  guild.text_channels)
      if general and general.permissions_for(guild.me).send_messages:
-      embed=discord.Embed(description=":wave: Thanks for inviting me! Type `niko help` to find out more!")
-      await general.send(embed=embed)
       channel = bot.get_channel(918347985937645609)
       embed=discord.Embed(description=f"Niko has just joined `{guild.name}`!! He is now in `{len(bot.guilds)}` servers!")
       await channel.send(embed=embed)
+      embed=discord.Embed(description=":wave: Thanks for inviting me! Type `niko help` to find out more!")
+      await general.send(embed=embed)
+
