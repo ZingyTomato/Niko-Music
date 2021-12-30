@@ -239,16 +239,15 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     async def start_nodes(self):
         await self.bot.wait_until_ready()
-        
+
         nodes = {
             "MAIN": {
-                "host": "lavalink.devz.cloud",
-                "port": 443,
-                "rest_uri": "https://lavalink.devz.cloud",
-                "password": "mathiscool",
+                "host": "192.168.0.107",	
+                "port": 2333,
+                "rest_uri": "http://192.168.0.107:2333",
+                "password": "nikomusic",
                 "identifier": "MAIN",
                 "region": "asia",
-                "secure": True,
             }
         }
 
@@ -265,7 +264,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="connect", aliases=["join"])
     async def connect_command(self, ctx,  *,channel: t.Optional[discord.VoiceChannel]):
         player = self.get_player(ctx)
-        await ctx.guild.change_voice_state(channel = ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
+        await ctx.guild.change_voice_state(channel=ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
         chanid = ctx.author.voice.channel.id
         embed=discord.Embed(description=f":wave: I have just **joined** <#{chanid}>", color=discord.Colour.green())
         embed.set_footer(text="If you're enjoying using niko, please vote for me with `niko vote`")
@@ -311,6 +310,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         if "youtube" in query:
           embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
           return await ctx.reply(embed=embed, mention_author=False)
+        if "https://youtu.be/" in query:
+          embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
+          return await ctx.reply(embed=embed, mention_author=False)
         if "https://open.spotify.com/playlist" in query:
          sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
          playlist_link = f"{query}"
@@ -322,9 +324,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           queryfinal = f"{track_name} " + " " + f"{track_artist}" 
           ytmusic = YTMusic()
           search_results = ytmusic.search(f'{queryfinal}', filter="songs")
-          print(search_results)
           vidid = search_results[0]['videoId']
           url = f"https://www.youtube.com/watch?v={vidid}"
+          print(url)
           await player.add_tracks(ctx, await self.wavelink.get_tracks(url))	
         if "https://open.spotify.com/album" in query:	
          sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
@@ -336,16 +338,18 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           queryfinal = f"{track_name} " + " " + f"{track_artist}" 
           ytmusic = YTMusic()
           search_results = ytmusic.search(f'{queryfinal}', filter="songs")
-          print(search_results)
           vidid = search_results[0]['videoId']
           url = f"https://www.youtube.com/watch?v={vidid}"
+          print(url)
           await player.add_tracks(ctx, await self.wavelink.get_tracks(url))	
         if "https://deezer.com" in query:
           embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify Playlists and Albums (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
           return await ctx.reply(embed=embed, mention_author=False)
         if "https://soundcloud.com" in query:
+         print(query)
          await player.add_tracks(ctx, await self.wavelink.get_tracks(query))
         if "https://" in query:
+         print(query)
          await player.add_tracks(ctx, await self.wavelink.get_tracks(query))
         
            
@@ -356,17 +360,19 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         else:
             query = query.strip("<>")
             if not re.match(URL_REGEX, query):
+             async with ctx.typing():
                 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
                 results = sp.search(q=f'{query}', limit=1)
                 for idx, track in enumerate(results['tracks']['items']):
                   querytrack = track['name']
-                  queryartist = track["artists"][0]["name"]
+                  queryartist = track["artists"][0]["name"]	
                   queryfinal =f"{queryartist}" + " " + f"{querytrack}"
                   print(queryfinal)
                   ytmusic = YTMusic()
-                  search_results = ytmusic.search(f'{queryfinal}', filter="songs")
+                  search_results = ytmusic.search(f'{queryfinal}', filter="songs", limit=2)
                   vidid = search_results[0]['videoId']
                   url = f"https://www.youtube.com/watch?v={vidid}"
+                  print(url)
                   await player.add_tracks(ctx, await self.wavelink.get_tracks(url))    
                   embed=discord.Embed(title=f":notes: **Added to the queue!**", color=discord.Colour.green())
                   try:
@@ -377,8 +383,16 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                     embed.add_field(name=":blond_haired_person: Artist", value=f"{queryartist}", inline=False)
                   except:
                     embed.add_field(name=":blond_haired_person: Artist", value=f"{player.queue.current_track.author}", inline=False)
+                  try:
+                    embed.add_field(name=":books: Album", value=f"{track['album']['name']}", inline=False)
+                  except:
+                    pass
+                  try:
+                    embed.add_field(name=":calendar: Release Date", value=f"{track['album']['release_date']}", inline=False)
+                  except:
+                    pass
                   length = divmod(player.queue.current_track.length, 60000)
-                  embed.add_field(name=f":alarm_clock: Duration", value=f"{int(length[0])}:{round(length[1]/1000):02}", inline=False)
+                  embed.add_field(name=f":alarm_clock: Duration", value=f"{search_results[0]['duration']}", inline=False)
                   embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
                   try:
                     embed.set_thumbnail(url=f"{track['album']['images'][0]['url']}")
@@ -613,6 +627,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         if player.queue.is_empty:
             raise QueueIsEmpty
 
+        
         embed = discord.Embed(
             title="The Queue",
             description=f"Here are the next **{show}** tracks.",
@@ -623,9 +638,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         if upcoming := player.queue.upcoming:
             embed.add_field(
                 name=":eyes: What's next",
-                value="\n".join(t.title for t in upcoming[:show]),
+                value="\n".join(f"{t.title}" for t in upcoming[:show]),
                 inline=False
             )
+        
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
         artist=f"{player.queue.current_track.author}"
         newartist=artist.split()
@@ -731,16 +747,16 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         artist=f"{player.queue.current_track.author}"
         newartist=artist.split()
         newartist.pop()
-        newartist.pop()
+        newartist.pop()	
         finalstr = ' '.join([str(elem) for elem in newartist])
         #print(finalstr)
         print(f"{finalstr} - {player.queue.current_track.title}")
         results = sp.search(q=f'{finalstr} - {player.queue.current_track.title}', limit=1)
         #print(f"{player.queue.current_track.author} - {player.queue.current_track.title}")
         for idx, track in enumerate(results['tracks']['items']):
-            querytrack = track['name']
-            queryartist = track["artists"][0]["name"]
-            queryfinal =f"{queryartist}" + " " + f"{querytrack}"
+           querytrack = track['name']
+           queryartist = track["artists"][0]["name"]
+           queryfinal =f"{queryartist}" + " " + f"{querytrack}"
             #print(queryfinal)
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         try:
@@ -753,6 +769,14 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
              embed.add_field(name=":blond_haired_person: Artist", value=f"{player.queue.current_track.author}", inline=False)
         try:
              embed.set_thumbnail(url=f"{track['album']['images'][0]['url']}")
+        except:
+              pass
+        try:
+             embed.add_field(name=":books: Album", value=f"{track['album']['name']}", inline=False)
+        except:
+              pass
+        try:
+             embed.add_field(name=":calendar: Release Date", value=f"{track['album']['release_date']}", inline=False)
         except:
               pass
         embed.set_footer(text="Made by ZingyTomato#0604. DM if you face any issues.")
