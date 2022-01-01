@@ -15,7 +15,8 @@ import requests
 import json
 from discord_components import DiscordComponents, ComponentsBot, Button
 from ytmusicapi import YTMusic
-
+import os
+import urllib.parse as urlparse
 
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
@@ -169,16 +170,20 @@ class Player(wavelink.Player):
             pass
 
     async def add_tracks(self, ctx, tracks):
-        if not tracks:
-            embed=discord.Embed(description="Sorry, I couldn't find any songs with that title! Make sure to **include** the artists name as well.", color=discord.Colour.red())
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-            await ctx.reply(embed=embed, mention_author=False)
+        #if not tracks:
+            #embed=discord.Embed(description="Sorry, I couldn't find any songs with that title! Make sure to **include** the artists name as well.", color=discord.Colour.red())
+            #embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            #await ctx.reply(embed=embed, mention_author=False)
 
         if isinstance(tracks, wavelink.TrackPlaylist):
             self.queue.add(*tracks.tracks)
 
         elif len(f"{tracks}".split('\n'))== 1:
             self.queue.add(tracks[0])
+            #embed=discord.Embed(description=f":notes: **{tracks[0].title}** has been added to the queue!", color=discord.Colour.green())
+            #embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            #embed.set_footer(text="Check the current queue with `niko queue`. Made by ZingyTomato#0604. DM if you face any issues.")
+            #await ctx.reply(embed=embed, mention_author=False)
         else:
             if (track := await self.choose_track(ctx, tracks)) is not None:
                 self.queue.add(track)
@@ -192,12 +197,11 @@ class Player(wavelink.Player):
     async def start_playback(self):
         await self.play(self.queue.current_track)
         
-        
     async def advance(self):
       try:
            if (track := self.queue.get_next_track()) is not None:
              await self.play(track)
-             
+           
       except QueueIsEmpty:
           pass
           
@@ -229,7 +233,6 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             await payload.player.repeat_track()
         else:
             await payload.player.advance()
-
     async def cog_check(self, ctx):
         if isinstance(ctx.channel, discord.DMChannel):
             await ctx.reply("Sorry, you can't use my music commands in a DM!", mention_author=False)
@@ -242,10 +245,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
         nodes = {
             "MAIN": {
-                "host": "192.168.0.107",	
-                "port": 2333,
-                "rest_uri": "http://192.168.0.107:2333",
-                "password": "nikomusic",
+                "host": "173.249.9.178",	
+                "port": 5074,
+                "rest_uri": "http://173.249.9.178:5074",
+                "password": "EpikHostOnTop",
                 "identifier": "MAIN",
                 "region": "asia",
             }
@@ -264,16 +267,27 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     @commands.command(name="connect", aliases=["join"])
     async def connect_command(self, ctx,  *,channel: t.Optional[discord.VoiceChannel]):
         player = self.get_player(ctx)
-        await ctx.guild.change_voice_state(channel=ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
+        #await ctx.guild.change_voice_state(channel=ctx.message.author.voice.channel, self_mute=False, self_deaf=True)
+        channel = await player.connect(ctx, channel)
         chanid = ctx.author.voice.channel.id
         embed=discord.Embed(description=f":wave: I have just **joined** <#{chanid}>", color=discord.Colour.green())
         embed.set_footer(text="If you're enjoying using niko, please vote for me with `niko vote`")
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-        await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        await ctx.reply(embed=embed, components=[[Button(label = "We just made a support server!", custom_id = "button1", style=5, url="https://discord.gg/JUe8XMmR9S")]], mention_author=False)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Joined VC in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
 
+    @connect_command.error
+    async def connect_command_error(self, ctx, exc):
+        if isinstance(exc, AlreadyConnectedToChannel):
+            embed=discord.Embed(description=f":no_entry_sign: Sorry, you are already **in** a voice channel.", color=discord.Colour.red())
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            await ctx.reply(embed=embed, mention_author=False)
+        elif isinstance(exc, NoVoiceChannel):
+            embed=discord.Embed(description=f":no_entry_sign: Sorry, you are not currently **in** a voice channel.", color=discord.Colour.red())
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            await ctx.reply(embed=embed, mention_author=False)
             
     @commands.command(name="disconnect", aliases=["leave"])
     async def disconnect_command(self, ctx):
@@ -284,7 +298,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed=discord.Embed(description=f":wave: I have just **left** your VC!", color=discord.Colour.green())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Left VC in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
         
@@ -297,6 +311,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         elif isinstance(exc, NoVoiceChannel):
             embed=discord.Embed(description=f":no_entry_sign: Sorry, you are not currently **in** a voice channel.", color=discord.Colour.red())
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            await ctx.reply(embed=embed, mention_author=False)
         
             
     @commands.command(name="play",pass_context=True)	
@@ -322,12 +337,13 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           track_name = track["track"]["name"]
           track_artist = track["track"]["artists"][0]["name"]
           queryfinal = f"{track_name} " + " " + f"{track_artist}" 
+          #query = f"scsearch:{queryfinal}"
           ytmusic = YTMusic()
           search_results = ytmusic.search(f'{queryfinal}', filter="songs")
           vidid = search_results[0]['videoId']
           url = f"https://www.youtube.com/watch?v={vidid}"
-          print(url)
-          await player.add_tracks(ctx, await self.wavelink.get_tracks(url))	
+          queryytmusic = f"ytmsearch:{queryfinal}"
+          await player.add_tracks(ctx, await self.wavelink.get_tracks(queryytmusic))	
         if "https://open.spotify.com/album" in query:	
          sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
          album_link = f"{query}"
@@ -336,12 +352,16 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           track_name = track["name"]
           track_artist = track["artists"][0]["name"]
           queryfinal = f"{track_name} " + " " + f"{track_artist}" 
+          #query = f"scsearch:{queryfinal}"
           ytmusic = YTMusic()
           search_results = ytmusic.search(f'{queryfinal}', filter="songs")
           vidid = search_results[0]['videoId']
           url = f"https://www.youtube.com/watch?v={vidid}"
-          print(url)
-          await player.add_tracks(ctx, await self.wavelink.get_tracks(url))	
+          queryytmusic = f"ytmsearch:{queryfinal}"
+          try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(queryytmusic))	
+          except:
+            pass
         if "https://deezer.com" in query:
           embed=discord.Embed(description=":no_entry_sign: **Supported** Platforms: Soundcloud (With Search functionality), Spotify Playlists and Albums (Link only), Bandcamp (Link only), Vimeo (Link only), Twitch (Link only), HTTP Streams (Link only) and local files.", color=discord.Colour.red())
           return await ctx.reply(embed=embed, mention_author=False)
@@ -367,13 +387,11 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                   querytrack = track['name']
                   queryartist = track["artists"][0]["name"]	
                   queryfinal =f"{queryartist}" + " " + f"{querytrack}"
-                  print(queryfinal)
                   ytmusic = YTMusic()
-                  search_results = ytmusic.search(f'{queryfinal}', filter="songs", limit=2)
-                  vidid = search_results[0]['videoId']
-                  url = f"https://www.youtube.com/watch?v={vidid}"
-                  print(url)
-                  await player.add_tracks(ctx, await self.wavelink.get_tracks(url))    
+                  search_results = ytmusic.search(f'{query}', filter="songs", limit=1)
+                  queryytmusic = f"ytmsearch:{queryfinal}"
+                  print(queryytmusic)
+                  await player.add_tracks(ctx, await self.wavelink.get_tracks(queryytmusic))    
                   embed=discord.Embed(title=f":notes: **Added to the queue!**", color=discord.Colour.green())
                   try:
                     embed.add_field(name=":scroll: Title", value=f"{querytrack}", inline=False)
@@ -390,7 +408,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                   try:
                     embed.add_field(name=":calendar: Release Date", value=f"{track['album']['release_date']}", inline=False)
                   except:
-                    pass
+                     pass
                   length = divmod(player.queue.current_track.length, 60000)
                   embed.add_field(name=f":alarm_clock: Duration", value=f"{search_results[0]['duration']}", inline=False)
                   embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
@@ -399,13 +417,8 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
                   except:
                     pass
                   await ctx.reply(embed=embed, mention_author=False)
-            if player.queue.current_track.length == 30000:
-                embed=discord.Embed(description=":no_entry_sign: Sorry! This song is currently blocked in my region. Using a different source to find the song :mag:", color=discord.Colour.red())
-                await ctx.reply(embed=embed, mention_author=False)
-                await player.stop()
-                querysearchyt = f"ytsearch:{queryfinal}" + "audio"
-                await player.add_tracks(ctx, await self.wavelink.get_tracks(querysearchyt))	
-            channel = self.bot.get_channel(918347985937645609)
+                  
+            channel = self.bot.get_channel(926147126180855850)
             length = divmod(player.queue.current_track.length, 60000)
             embed=discord.Embed(description=f"``{ctx.author.name}`` is playing ``{player.queue.current_track.title}`` by ``{player.queue.current_track.author}`` in ``{ctx.message.guild.name}`` which is ``{int(length[0])}:{round(length[1]/1000):02}7`` seconds long!")
             await channel.send(embed=embed)
@@ -422,6 +435,120 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             embed=discord.Embed(description=f":no_entry_sign: Sorry, you are not currently **in** a voice channel.", color=discord.Colour.red())
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
             await ctx.reply(embed=embed, mention_author=False)
+          
+    @commands.command(name="recommend",pass_context=True)    
+    async def reccomend_command(self, ctx):
+        player = self.get_player(ctx)
+        if player.queue.is_empty:
+           raise QueueIsEmpty
+        url_data = urlparse.urlparse(f"{player.queue.current_track.uri}")
+        query = urlparse.parse_qs(url_data.query)
+        video = query["v"][0]
+        print(video)
+        embed=discord.Embed(description="Adding **recommend** tracks to the queue!", color=discord.Color.green())
+        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+        embed.set_footer(text="Check the current queue with `niko queue`")
+        await ctx.reply(embed=embed, mention_author=False)
+        ytmusic = YTMusic()
+        playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=10)
+        song1 = playlist["tracks"][1]["title"]
+        print(song1)
+        result1 = ytmusic.search(f'{song1}', filter="songs", limit=1)
+        vidid1 = result1[0]['videoId']
+        url1 = f"https://www.youtube.com/watch?v={vidid1}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url1))    
+        except:
+           pass
+        song2 = playlist["tracks"][2]["title"]
+        print(song2)
+        result2 = ytmusic.search(f'{song2}', filter="songs", limit=1)
+        vidid2 = result2[0]['videoId']
+        url2 = f"https://www.youtube.com/watch?v={vidid2}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url2))    
+        except:
+           pass
+        song3 = playlist["tracks"][3]["title"]
+        print(song3)
+        result3 = ytmusic.search(f'{song3}', filter="songs", limit=1)
+        vidid3 = result3[0]['videoId']
+        url3 = f"https://www.youtube.com/watch?v={vidid3}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url3))    
+        except:
+           pass
+        song4 = playlist["tracks"][4]["title"]
+        print(song4)
+        result4 = ytmusic.search(f'{song4}', filter="songs", limit=1)
+        vidid4 = result4[0]['videoId']
+        url4 = f"https://www.youtube.com/watch?v={vidid4}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url4))    
+        except:
+           pass
+        song5 = playlist["tracks"][5]["title"]
+        print(song5)
+        result5 = ytmusic.search(f'{song5}', filter="songs", limit=1)
+        vidid5 = result5[0]['videoId']
+        url5 = f"https://www.youtube.com/watch?v={vidid5}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url5))    
+        except:
+           pass
+        song6 = playlist["tracks"][6]["title"]
+        print(song6)
+        result6 = ytmusic.search(f'{song6}', filter="songs", limit=1)
+        vidid6 = result6[0]['videoId']
+        url6 = f"https://www.youtube.com/watch?v={vidid5}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url6))    
+        except:
+           pass
+        song7 = playlist["tracks"][7]["title"]
+        print(song7)
+        result7 = ytmusic.search(f'{song7}', filter="songs", limit=1)
+        vidid7 = result7[0]['videoId']
+        url7 = f"https://www.youtube.com/watch?v={vidid7}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url7))    
+        except:
+           pass
+        song8 = playlist["tracks"][8]["title"]
+        print(song8)
+        result8 = ytmusic.search(f'{song8}', filter="songs", limit=1)
+        vidid8 = result8[0]['videoId']
+        url8 = f"https://www.youtube.com/watch?v={vidid8}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url8))    
+        except:
+           pass
+        song9 = playlist["tracks"][9]["title"]
+        print(song9)
+        result9 = ytmusic.search(f'{song9}', filter="songs", limit=1)
+        vidid9 = result9[0]['videoId']
+        url9 = f"https://www.youtube.com/watch?v={vidid7}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url9))    
+        except:
+           pass
+        song10 = playlist["tracks"][10]["title"]
+        print(song10)
+        result10 = ytmusic.search(f'{song10}', filter="songs", limit=1)
+        vidid10 = result10[0]['videoId']
+        url10 = f"https://www.youtube.com/watch?v={vidid10}"
+        try: 
+            await player.add_tracks(ctx, await self.wavelink.get_tracks(url10))    
+        except:
+           pass
+            
+    @reccomend_command.error
+    async def reccomend_command_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            embed=discord.Embed(description=f":no_entry_sign: Sorry! The queue is currently **empty**!", color=discord.Colour.red())
+            embed.set_footer(text="Tip : You can add a song to the queue by playing a song with `niko play songname`!")	
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            await ctx.reply(embed=embed, mention_author=False)
             
     @commands.command(name="pause")
     async def pause_command(self, ctx):
@@ -432,7 +559,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed=discord.Embed(description=":pause_button: I've just **paused** the song!", color=discord.Colour.green())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Paused song in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
 
@@ -453,31 +580,51 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed=discord.Embed(description=":play_pause: I've just **resumed** the song!", color=discord.Colour.green())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Resumed song in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
 
     @commands.command(name="stop")
     async def stop_command(self, ctx):
         player = self.get_player(ctx)
+        if player.queue.is_empty:
+          raise QueueIsEmpty
         await player.stop()
         embed=discord.Embed(description=":no_entry_sign: I've just **stopped** the currently playing song!", color=discord.Colour.red())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Stopped song in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
+        
+    @stop_command.error
+    async def stop_command_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            embed=discord.Embed(description=f":no_entry_sign: Sorry! The queue is currently **empty**!", color=discord.Colour.red())
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            embed.set_footer(text="Tip : You can add a song to the queue by playing a song by typing `niko play songname`")
+            await ctx.reply(embed=embed, mention_author=False)	
         
     @commands.command(name="clear")
     async def clear_command(self, ctx):
         player = self.get_player(ctx)
+        if player.queue.is_empty:
+          raise QueueIsEmpty
         player.queue.empty()
         embed=discord.Embed(description=":no_entry_sign: Emptied the queue!", color=discord.Colour.green())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Emptied queue in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
+        
+    @clear_command.error
+    async def clear_command_error(self, ctx, exc):
+        if isinstance(exc, QueueIsEmpty):
+            embed=discord.Embed(description=f":no_entry_sign: Sorry! The queue is currently **empty**!", color=discord.Colour.red())
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+            embed.set_footer(text="Tip : You can add a song to the queue by playing a song by typing `niko play songname`")
+            await ctx.reply(embed=embed, mention_author=False)	
         
     @commands.command(name="next", aliases=["skip"])
     async def next_command(self, ctx):
@@ -497,7 +644,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             querysearchyt = f"ytsearch:{player.queue.current_track.title}"
             await player.stop()
             await player.add_tracks(ctx, await self.wavelink.get_tracks(querysearchyt))	
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Skipping song in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
 
@@ -526,7 +673,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         embed.set_footer(text="Tip : You can check the current queue by typing `niko queue`")
         await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Playing previous track in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
         if player.queue.current_track.length == 30000:
@@ -554,7 +701,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         embed.set_footer(text="Tip : You can check the new queue with `niko queue`")
         await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Shuffling queue in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
 
@@ -581,7 +728,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
           embed.set_footer(text="Available options for loop  are : `stop, song and queue`")
           await ctx.reply(embed=embed, mention_author=False)
-          channel = self.bot.get_channel(918347985937645609)
+          channel = self.bot.get_channel(926147126180855850)
           embed=discord.Embed(description=f"Looped stopped in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
           await channel.send(embed=embed)
         if mode == "song":
@@ -591,7 +738,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           embed.set_footer(text="Available options for loop are : stop, song and queue")
           embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
           await ctx.reply(embed=embed, mention_author=False)
-          channel = self.bot.get_channel(918347985937645609)
+          channel = self.bot.get_channel(926147126180855850)
           embed=discord.Embed(description=f"Looping song in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
           await channel.send(embed=embed)
         if mode == "queue":
@@ -601,7 +748,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           embed.set_footer(text="Available options for loop are : stop, song and queue")
           embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
           await ctx.reply(embed=embed, mention_author=False)
-          channel = self.bot.get_channel(918347985937645609)
+          channel = self.bot.get_channel(926147126180855850)
           embed=discord.Embed(description=f"Looping queue in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
           await channel.send(embed=embed)
           
@@ -634,21 +781,27 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             colour=discord.Colour.green()
         )
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
-        embed.add_field(name=":notes: Currently playing!", value=getattr(player.queue.current_track, "title", "Sorry, no tracks are currently **playing** at the moment!"), inline=False)
+        embed.add_field(name=":notes: Currently playing!", value=getattr(player.queue.current_track, f"title", "Sorry, no tracks are currently **playing** at the moment!"), inline=False)
         if upcoming := player.queue.upcoming:
             embed.add_field(
                 name=":eyes: What's next",
-                value="\n".join(f"{t.title}" for t in upcoming[:show]),
-                inline=False
+                value=(
+                  "\n".join(
+                      f"**{i + 1}.** {t.title} ({t.length//60000}:{str(t.length%60).zfill(2)})"
+                      for i, t in enumerate(upcoming[:show])
+                 )
+              ),
             )
         
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
         artist=f"{player.queue.current_track.author}"
-        newartist=artist.split()
-        newartist.pop()
-        newartist.pop()
-        finalstr = ' '.join([str(elem) for elem in newartist])
-        results = sp.search(q=f'{finalstr} - {player.queue.current_track.title}', limit=1)
+        lst=artist.split()
+        newstr=""
+        for i in lst:
+         if i == "-":
+          break
+        newstr+=i+" " 
+        results = sp.search(q=f'{newstr} - {player.queue.current_track.title}', limit=1)
         for idx, track in enumerate(results['tracks']['items']):
             querytrack = track['name']
             queryartist = track["artists"][0]["name"]
@@ -668,7 +821,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             await ctx.reply(embed=embed, mention_author=False)
 
 
-    @commands.group(name="volume", invoke_without_command=True)
+    @commands.group(name="volume", invoke_without_command=True, aliases=["vol"])
     async def volume_group(self, ctx, volume: int):
         player = self.get_player(ctx)
 
@@ -745,19 +898,17 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         )
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOT CLIENT ID",client_secret="SPOT CLIENT SECRET"))
         artist=f"{player.queue.current_track.author}"
-        newartist=artist.split()
-        newartist.pop()
-        newartist.pop()	
-        finalstr = ' '.join([str(elem) for elem in newartist])
-        #print(finalstr)
-        print(f"{finalstr} - {player.queue.current_track.title}")
-        results = sp.search(q=f'{finalstr} - {player.queue.current_track.title}', limit=1)
-        #print(f"{player.queue.current_track.author} - {player.queue.current_track.title}")
+        lst=artist.split()
+        newstr=""
+        for i in lst:
+         if i == "-":
+          break
+        newstr+=i+" " 
+        results = sp.search(q=f'{newstr} - {player.queue.current_track.title}', limit=1)
         for idx, track in enumerate(results['tracks']['items']):
            querytrack = track['name']
            queryartist = track["artists"][0]["name"]
            queryfinal =f"{queryartist}" + " " + f"{querytrack}"
-            #print(queryfinal)
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         try:
              embed.add_field(name=":scroll: Title", value=f"{querytrack}", inline=False)
@@ -806,9 +957,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             raise QueueIsEmpty
 
         if not 0 <= index <= player.queue.length:
-            raise NoMoreTracks
+            raise NoMoreTracks	
 
-        player.queue.position = index - 2
+        player.queue.position = index - 1
         await player.stop()
         embed=discord.Embed(description=f":notes: I'm playing the track in position **{index}**", color=discord.Colour.green())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
@@ -841,7 +992,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         embed=discord.Embed(description=f"I'm **replaying** the currently playing song!", color=discord.Colour.green())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         await ctx.reply(embed=embed, mention_author=False)
-        channel = self.bot.get_channel(918347985937645609)
+        channel = self.bot.get_channel(926147126180855850)
         embed=discord.Embed(description=f"Replaying song in `{ctx.message.guild.name}`. Requested by `{ctx.author.name}`")
         await channel.send(embed=embed)
 
@@ -1005,9 +1156,10 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
           embed.add_field(name = ":abc: niko lyrics", value = "Niko finds lyrics on most songs!")
           embed.add_field(name = ":loudspeaker: niko eq help", value = "Niko changes the song filter based on a set of presets!")
           embed.add_field(name = ":rewind: niko replay", value = "Niko rewinds the song from the start.")
+          embed.add_field(name = ":smile: niko recommend", value = "Niko plays 10 recommended songs based on what's playing!")
           embed.add_field(name = "📩 niko invite", value = "Invite niko to other servers!")
           embed.set_footer(text="Made by ZingyTomato#0604. DM if you face any issues.")
-          await ctx.reply(embed=embed,components = [[Button(label = "Invite me!", custom_id = "button1", style=5, url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands"),Button(label = "Vote for me!", custom_id = "button1", style=5, url="https://top.gg/bot/915595163286532167/vote"),Button(label = "Visit my project!", custom_id = "button1", style=5, url="https://github.com/ZingyTomato/Niko-Music")]],mention_author=False)
+          await ctx.reply(embed=embed,components = [[Button(label = "Invite me!", custom_id = "button1", style=5, url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands"),Button(label = "Vote for me!", custom_id = "button1", style=5, url="https://top.gg/bot/915595163286532167/vote"),Button(label = "Visit my project!", custom_id = "button1", style=5, url="https://github.com/ZingyTomato/Niko-Music"), Button(label = "Support Server!", custom_id = "button1", style=5, url="https://discord.gg/JUe8XMmR9S")]],mention_author=False)
     
 def setup(bot):
     bot.add_cog(Music(bot))
