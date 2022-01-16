@@ -537,7 +537,45 @@ async def queue(ctx: lightbulb.Context) -> None:
         pass
 
     await ctx.respond(embed)
+ 
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.option("index", "Index for the song you want to remove.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.command("remove", "Niko removes a song from the queue.")
+@lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
+async def remove(ctx: lightbulb.Context) -> None:
+    states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
+    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    if not voice_state:
+        embed = hikari.Embed(title="You are not in a voice channel.", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return None
+    node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
 
+    if not node or not node.now_playing:
+        embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return
+    index = int(ctx.options.index)
+    node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
+    if index == 0:
+        embed = hikari.Embed(title=f"You cannot remove a song that is currently playing.",color=0xC80000)
+        return await ctx.respond(embed=embed)
+    try:
+     queue = node.queue
+     song_to_be_removed = queue[index]
+    except:
+        embed = hikari.Embed(title=f"Incorrect position entered.",color=0xC80000)
+        await ctx.respond(embed=embed)
+    try:
+        queue.pop(index)
+    except:
+        pass
+    node.queue = queue
+    await plugin.bot.d.lavalink.set_guild_node(ctx.guild_id, node)
+    embed = hikari.Embed(title=f"Removed {song_to_be_removed.track.info.title}.",color=0xD7CBCC,)
+    await ctx.respond(embed=embed)
+    
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("empty", "Niko empties the queue.")
