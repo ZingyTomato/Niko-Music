@@ -707,10 +707,10 @@ async def remove(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("index", "Index for the song you want to move to.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("moveto", "Niko moves to a different song in the queue..")
+@lightbulb.option("position", "The song's position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.command("skipto", "Niko goes to a different song in the queue.")
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
-async def moveto(ctx: lightbulb.Context) -> None:
+async def skipto(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
     if not voice_state:
@@ -723,7 +723,7 @@ async def moveto(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    index = int(ctx.options.index)
+    index = int(ctx.options.position)
     node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
     if index == 0:
         embed = hikari.Embed(title=f"You cannot move to a song that is currently playing.",color=0xC80000)
@@ -734,20 +734,55 @@ async def moveto(ctx: lightbulb.Context) -> None:
         return await ctx.respond(embed=embed)
     try:
      queue = node.queue
-     song_to_be_moved = queue[index]
+     song_to_be_skipped = queue[index]
     except:
         embed = hikari.Embed(title=f"Incorrect position entered.",color=0xC80000)
         await ctx.respond(embed=embed)
-    try:
-     queue.insert(1, queue[index])
-     queue.pop(index)
-     queue.pop(index)
-    except:
-        pass
+    queue.insert(1, queue[index])
+    queue.pop(index)
+    queue.pop(index)
     node.queue = queue
     await plugin.bot.d.lavalink.set_guild_node(ctx.guild_id, node)
     await plugin.bot.d.lavalink.skip(ctx.guild_id)
-    embed = hikari.Embed(title=f"Moved to {song_to_be_moved.track.info.title}.",color=0xD7CBCC,)
+    embed = hikari.Embed(title=f"Skipped to {song_to_be_skipped.track.info.title}.",color=0xD7CBCC)
+    await ctx.respond(embed=embed)
+
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.option("current_position", "The song's current position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("new_position", "The song's new position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.command("move", "Niko goes to a different song in the queue.")
+@lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
+async def move(ctx: lightbulb.Context) -> None:
+    states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
+    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    if not voice_state:
+        embed = hikari.Embed(title="You are not in a voice channel.", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return None
+    node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
+
+    if not node or not node.now_playing:
+        embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return
+    new_index = int(ctx.options.new_position)
+    old_index = int(ctx.options.current_position)
+    node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
+    if not len(node.queue) >= 1:
+        embed = hikari.Embed(title=f"There is only 1 song in the queue.",color=0xC80000)
+        await ctx.respond(embed=embed)
+    queue = node.queue
+    song_to_be_moved = queue[old_index]
+    try:
+        queue.pop(old_index)
+        queue.insert(new_index, song_to_be_moved)
+    except:
+        embed = hikari.Embed(title=f"Incorrect position entered.",color=0xC80000)
+        await ctx.respond(embed=embed)
+    node.queue = queue
+    await plugin.bot.d.lavalink.set_guild_node(ctx.guild_id, node)
+    embed = hikari.Embed(title=f"Moved {song_to_be_moved.track.info.title} to position {new_index}.", color=0xD7CBCC)
     await ctx.respond(embed=embed)
 
 @plugin.command()
