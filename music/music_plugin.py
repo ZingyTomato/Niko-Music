@@ -493,14 +493,37 @@ async def lyrics(ctx: lightbulb.Context) -> None:
 class PlayMenu(neon.ComponentMenu):
     @neon.button("Pause", "pause_button", hikari.ButtonStyle.PRIMARY)
     async def pause(self, button: neon.Button) -> None:
+        node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
+        if not node or not node.now_playing:
+          embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
+          await self.edit_msg(embed=embed)
+          return
         await self.edit_msg(f"Paused Song.")
         node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
         await plugin.bot.d.lavalink.pause(self.ctx.guild_id)
     @neon.button("Resume", "resume_button", hikari.ButtonStyle.PRIMARY)
     async def resume(self, button: neon.Button) -> None:
+        node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
+        if not node or not node.now_playing:
+          embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
+          await self.edit_msg(embed=embed)
+          return
         await self.edit_msg(f"Resumed Song.")
         node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
         await plugin.bot.d.lavalink.resume(self.ctx.guild_id)
+    @neon.button("Leave VC", "leave_button", hikari.ButtonStyle.DANGER)
+    async def leave(self, button: neon.Button) -> None:
+        node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
+        if not node or not node.now_playing:
+          embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
+          await self.edit_msg(embed=embed)
+          return
+        await self.edit_msg(f"Stopped Song and Left VC.")
+        node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
+        await plugin.bot.d.lavalink.destroy(self.ctx.guild_id)
+        await plugin.bot.d.lavalink.remove_guild_node(self.ctx.guild_id)
+        await plugin.bot.d.lavalink.remove_guild_from_loops(self.ctx.guild_id)
+        await plugin.bot.d.lavalink.leave(self.ctx.guild_id)
     @neon.on_timeout(disable_components=True)
     async def on_timeout(self) -> None:
      await self.edit_msg("Message Timed Out.")
