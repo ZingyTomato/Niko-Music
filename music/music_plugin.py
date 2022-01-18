@@ -10,16 +10,25 @@ import re
 import lyricsgenius
 import urllib.parse as urlparse
 from lightbulb.ext import neon
+import requests
+import json
+import os
 
 HIKARI_VOICE = False
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
-
+SPOTCLIENT_ID="CLIENTID"
+SPOTCLIENT_SECRET="CLIENTSECRET"
+GENIUS_API_KEY="GENIUSAPIKEY"
+TOKEN="BOT TOKEN"
+LAVALINK_SERVER="SERVER"
+LAVALINK_PASSWORD="PASSWORD"
 
 class EventHandler:
 
     async def track_start(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackStart) -> None:
         logging.info("Track started on guild: %s", event.guild_id)
+        
 
     async def track_finish(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
         logging.info("Track finished on guild: %s", event.guild_id)
@@ -73,8 +82,8 @@ async def _join(ctx: lightbulb.Context) -> Optional[hikari.Snowflake]:
 @plugin.listener(hikari.ShardReadyEvent)
 async def start_lavalink(event: hikari.ShardReadyEvent) -> None:
     builder = (
-        lavasnek_rs.LavalinkBuilder(event.my_user.id, "TOKEN")
-        .set_host("192.168.0.114").set_password("nikomusic")
+        lavasnek_rs.LavalinkBuilder(event.my_user.id, TOKEN)
+        .set_host(LAVALINK_SERVER).set_password(LAVALINK_PASSWORD)
     )
     if HIKARI_VOICE:
         builder.set_start_gateway(False)
@@ -89,9 +98,6 @@ async def join(ctx: lightbulb.Context) -> None:
     channel_id = await _join(ctx)
     if channel_id:
         embed = hikari.Embed(title="Joined voice channel.", colour=0xD7CBCC)
-        await ctx.respond(embed=embed)
-    if HIKARI_VOICE:
-        embed = hikari.Embed(title="You are already in a voice channel.", color=0xD7CBCC)
         await ctx.respond(embed=embed)
 
 @plugin.command()
@@ -142,7 +148,7 @@ async def play(ctx: lightbulb.Context) -> None:
         embed=hikari.Embed(title="Supported Platforms : Soundcloud, Spotify, Bandcamp, Vimeo, Twitch and HTTP Streams.", color=0xC80000)
         return await ctx.respond(embed=embed)
     if "https://open.spotify.com/playlist" in ctx.options.song:
-        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
         playlist_link = f"{ctx.options.song}"
         playlist_URI = playlist_link.split("/")[-1].split("?")[0]
         track_uris = [x["track"]["uri"] for x in sp.playlist_tracks(playlist_URI)["items"]]
@@ -154,7 +160,7 @@ async def play(ctx: lightbulb.Context) -> None:
          query_information = await plugin.bot.d.lavalink.get_tracks(result)
          await plugin.bot.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
     if "https://open.spotify.com/album" in query:	
-        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
         album_link = f"{query}"
         album_id= album_link.split("/")[-1].split("?")[0]
         for track in sp.album_tracks(album_id)["items"]:
@@ -174,7 +180,7 @@ async def play(ctx: lightbulb.Context) -> None:
         return
     node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
-     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
      results = sp.search(q=f'{query}', limit=1)
      for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
@@ -208,7 +214,7 @@ async def play(ctx: lightbulb.Context) -> None:
         pass
      await ctx.respond(embed=embed1)
     else:
-     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
      results = sp.search(q=f'{query}', limit=1)
      for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
@@ -262,7 +268,7 @@ async def stop(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
     print(f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}")  
     for idx, track in enumerate(results['tracks']['items']):
@@ -328,7 +334,7 @@ async def seek(ctx: lightbulb.Context) -> None:
     else:
             secs = int(match.group(1))
     await plugin.bot.d.lavalink.seek_millis(ctx.guild_id, secs * 1000)
-    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
     print(f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}")  
     for idx, track in enumerate(results['tracks']['items']):
@@ -406,7 +412,7 @@ async def pause(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
     print(f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}")  
     for idx, track in enumerate(results['tracks']['items']):
@@ -425,7 +431,6 @@ async def pause(ctx: lightbulb.Context) -> None:
         pass
     await ctx.respond(embed=embed)
 
-
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("resume", "Niko resumes playing the currently playing track.")
@@ -443,7 +448,7 @@ async def resume(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
     print(f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}")  
     for idx, track in enumerate(results['tracks']['items']):
@@ -468,7 +473,7 @@ async def resume(ctx: lightbulb.Context) -> None:
 @lightbulb.command("lyrics", "Niko searches for the lyrics of any song of your choice!")
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def lyrics(ctx: lightbulb.Context) -> None:
-     genius = lyricsgenius.Genius("GENIUS API KEY")
+     genius = lyricsgenius.Genius(f"{GENIUS_API_KEY}")
      genius.verbose = True
      genius.remove_section_headers = False
      genius.skip_non_songs = True
@@ -481,7 +486,7 @@ async def lyrics(ctx: lightbulb.Context) -> None:
      if total > 650:
        embed=hikari.Embed(title="Character Limit Exceeded!", description=f"The lyrics in this song are too long. (Over 6000 characters)", color=0xC80000)
        await ctx.respond(embed=embed)
-     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
      results = sp.search(q=f'{ctx.options.song}', limit=1)
      for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
@@ -511,19 +516,29 @@ class PlayMenu(neon.ComponentMenu):
         await self.edit_msg(f"Resumed Song.")
         node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
         await plugin.bot.d.lavalink.resume(self.ctx.guild_id)
-    @neon.button("Leave VC", "leave_button", hikari.ButtonStyle.DANGER)
-    async def leave(self, button: neon.Button) -> None:
+    @neon.button("Skip", "skip_button", hikari.ButtonStyle.SECONDARY)
+    async def skip(self, button: neon.Button) -> None:
+     skip = await plugin.bot.d.lavalink.skip(self.ctx.guild_id)
+     node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
+     if not skip:
+        embed = hikari.Embed(title="There are no more tracks left in the queue.", colour=0xC80000)
+        await self.edit_msg(embed=embed)
+        return
+        embed = hikari.Embed(title=f"Skipped {skip.track.info.title}.", colour=0xC80000)
+        await self.edit_msg(embed=embed)
+    @neon.button("Stop", "stop_button", hikari.ButtonStyle.DANGER)
+    async def stop(self, button: neon.Button) -> None:
         node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
         if not node or not node.now_playing:
           embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
           await self.edit_msg(embed=embed)
           return
-        await self.edit_msg(f"Stopped Song and Left VC.")
-        node = await plugin.bot.d.lavalink.get_guild_node(self.ctx.guild_id)
         await plugin.bot.d.lavalink.destroy(self.ctx.guild_id)
+        await plugin.bot.d.lavalink.leave(self.ctx.guild_id)
         await plugin.bot.d.lavalink.remove_guild_node(self.ctx.guild_id)
         await plugin.bot.d.lavalink.remove_guild_from_loops(self.ctx.guild_id)
-        await plugin.bot.d.lavalink.leave(self.ctx.guild_id)
+        embed = hikari.Embed(title="Stopped the song and left the VC.", colour=0xC80000)
+        await self.edit_msg(embed=embed)
     @neon.on_timeout(disable_components=True)
     async def on_timeout(self) -> None:
      await self.edit_msg("Message Timed Out.")
@@ -544,7 +559,7 @@ async def now_playing(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="There are no songs playing at the moment.", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
     print(f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}")  
     for idx, track in enumerate(results['tracks']['items']):
@@ -577,7 +592,7 @@ async def now_playing(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
         pass
-    menu = PlayMenu(ctx, timeout=120)
+    menu = PlayMenu(ctx, timeout=200)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
 
@@ -618,7 +633,7 @@ class QueueMenu(neon.ComponentMenu):
      i = 1
      if len(node.queue) > 1:
         embed.add_field(name="Upcoming", value=f"\n".join([f'**{i}.** {tq.track.info.title}' for i, tq in enumerate(node.queue[1:], start=1)]))
-     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
      results = sp.search(q=f'{node.now_playing.track.info.author} {node.now_playing.track.info.title}', limit=1)
      for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
@@ -677,7 +692,7 @@ async def queue(ctx: lightbulb.Context) -> None:
     i = 1
     if len(node.queue) > 1:
         embed.add_field(name="Upcoming", value=f"\n".join([f'**{i}.** {tq.track.info.title}' for i, tq in enumerate(node.queue[1:], start=1)]))
-    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="CLIENT ID",client_secret="CLIENT SECRET"))
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f'{node.now_playing.track.info.author} {node.now_playing.track.info.title}', limit=1)
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
@@ -686,7 +701,7 @@ async def queue(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
         pass
-    menu = QueueMenu(ctx, timeout=120)
+    menu = QueueMenu(ctx, timeout=200)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
 
@@ -774,7 +789,7 @@ async def skipto(ctx: lightbulb.Context) -> None:
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("current_position", "The song's current position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
 @lightbulb.option("new_position", "The song's new position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("move", "Niko goes to a different song in the queue.")
+@lightbulb.command("move", "Move a song to a different position in the queue.")
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def move(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -914,7 +929,7 @@ class Menu(neon.ComponentMenu):
 @lightbulb.command("invite", "Invite Niko to other servers!")
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def invite(ctx: lightbulb.Context) -> None:
-    menu = Menu(ctx, timeout=60)
+    menu = Menu(ctx)
     embed=hikari.Embed(title="A Few Related Links.",color=0xD7CBCC)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
@@ -965,7 +980,7 @@ class helpmenu(neon.ComponentMenu):
 @lightbulb.command("help", "See a list of all my commands!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def help(ctx: lightbulb.Context) -> None:
-    menu = helpmenu(ctx, timeout=60)
+    menu = helpmenu(ctx, timeout=200)
     embed=hikari.Embed(title="Help Center",color=0xD7CBCC)
     embed.add_field(name="/join", value="Niko joins your VC.", inline=True)
     embed.add_field(name="/leave", value="Niko leaves your VC.", inline=True)
@@ -984,6 +999,25 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/empty", value="Niko empties the queue.", inline=True)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
+
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.option("query", "song query", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.command("download", "downloads music.")
+@lightbulb.implements(lightbulb.PrefixCommand)
+async def download_command(ctx: lightbulb.Context) -> None:
+    query = ctx.options.query.strip("<>")
+    if not re.match(URL_REGEX, query):
+     url = requests.get(f"http://192.168.0.109:5000/result/?query={query}")
+     decode = json.loads(url.text)
+     jiosong = decode[0]['media_url']
+     song= decode[0]['song']
+     os.system(f"youtube-dl -o '/root/musicfiles/%(title)s-%(id)s.%(ext)s' {jiosong} -x --audio-format mp3")
+     name = os.listdir("/root/musicfiles/")[0]
+     os.rename(f"/root/musicfiles/{name}", f"/root/musicfiles/{song}.mp3")
+     namefinal = os.listdir("/root/musicfiles")[0]
+     await ctx.respond(attachment=hikari.File(f"/root/musicfiles/{namefinal}"))
+     os.remove(f"/root/musicfiles/{namefinal}")
 
 if HIKARI_VOICE:
 
