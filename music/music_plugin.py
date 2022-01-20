@@ -174,7 +174,8 @@ async def play(ctx: lightbulb.Context) -> None:
     else:
         query_information = await plugin.bot.d.lavalink.get_tracks(query)
     if not query_information.tracks:
-        embed = hikari.Embed(title="**Sorry, I couldn't find any songs with that query! Please try to include the song's artist's name as well.**", colour=0xC80000)
+        embed = hikari.Embed(title="**Unable to find any songs! Try to include the artists name as well!**", colour=0xC80000)
+        await ctx.respond(embed=embed)
         return
     node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
@@ -476,7 +477,11 @@ async def lyrics(ctx: lightbulb.Context) -> None:
      genius.remove_section_headers = False
      genius.skip_non_songs = True
      song = genius.search_song(f"{ctx.options.song}")
-     test_stirng = f"{song.lyrics}"
+     try:
+      test_stirng = f"{song.lyrics}"
+     except:
+      embed = hikari.Embed(title="**Unable to find any lyrics!**", colour=0xC80000)
+      await ctx.respond(embed=embed)
      total = 1
      for i in range(len(test_stirng)):
        if(test_stirng[i] == ' ' or test_stirng == '\n' or test_stirng == '\t'):
