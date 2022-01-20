@@ -17,12 +17,12 @@ import os
 HIKARI_VOICE = False
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
-SPOTCLIENT_ID="CLIENTID"
-SPOTCLIENT_SECRET="CLIENTSECRET"
-GENIUS_API_KEY="GENIUSAPIKEY"
-TOKEN="BOT TOKEN"
-LAVALINK_SERVER="SERVER"
-LAVALINK_PASSWORD="PASSWORD"
+SPOTCLIENT_ID="SPOTIFY CLIENT ID"
+SPOTCLIENT_SECRET="SPOTIFY CLIENT SECRET"
+GENIUS_API_KEY="GENIUS API KEY"
+TOKEN="DISCORD BOT TOKEN"
+LAVALINK_SERVER="LAVALINK SERVER URL OR IP"
+LAVALINK_PASSWORD="LAVALINK PASSWORD"
 
 class EventHandler:
 
@@ -70,9 +70,7 @@ async def _join(ctx: lightbulb.Context) -> Optional[hikari.Snowflake]:
         try:
             connection_info = await plugin.bot.d.lavalink.join(ctx.guild_id, channel_id)
         except TimeoutError:
-            await ctx.respond(
-                "I was unable to connect to the voice channel, maybe missing permissions? or some internal issue."
-            )
+            await ctx.respond("It seems that there's an issue. I might not have the right permissions.")
             return None
 
     await plugin.bot.d.lavalink.create_session(connection_info)
@@ -92,17 +90,17 @@ async def start_lavalink(event: hikari.ShardReadyEvent) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("join", "Niko joins your voice channel")
+@lightbulb.command("join", "Niko joins your voice channel", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def join(ctx: lightbulb.Context) -> None:
     channel_id = await _join(ctx)
     if channel_id:
-        embed = hikari.Embed(title="Joined voice channel.", colour=0xD7CBCC)
+        embed = hikari.Embed(title="Joined voice channel.", colour=0x6100FF)
         await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("leave", "Niko leaves your voice channel.")
+@lightbulb.command("leave", "Niko leaves your voice channel.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def leave(ctx: lightbulb.Context) -> None:
     await plugin.bot.d.lavalink.destroy(ctx.guild_id)
@@ -113,20 +111,20 @@ async def leave(ctx: lightbulb.Context) -> None:
             await plugin.bot.update_voice_state(ctx.guild_id, None)
             await plugin.bot.d.lavalink.wait_for_connection_info_remove(ctx.guild_id)
     if not voice_state:
-        embed = hikari.Embed(title="You are not in a voice channel.", colour=0xC80000)
+        embed = hikari.Embed(title="You are not in a voice channel.", colour=0x6100FF)
         await ctx.respond(embed=embed)
         return None
     else:
         await plugin.bot.d.lavalink.leave(ctx.guild_id)
     await plugin.bot.d.lavalink.remove_guild_node(ctx.guild_id)
     await plugin.bot.d.lavalink.remove_guild_from_loops(ctx.guild_id)
-    embed = hikari.Embed(title="Left voice channel.", colour=0xD7CBCC)
+    embed = hikari.Embed(title="Left voice channel.", colour=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("song", "The name of the song you want to play.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("play", "Niko searches for your song.")
+@lightbulb.command("play", "Niko searches for your song.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def play(ctx: lightbulb.Context) -> None:
     query = ctx.options.song
@@ -186,7 +184,7 @@ async def play(ctx: lightbulb.Context) -> None:
         querytrack = track['name']
         print(querytrack)
         queryartist = track["artists"][0]["name"]	
-     embed1=hikari.Embed(title="Now Playing",color=0xFAC800)
+     embed1=hikari.Embed(title="Now Playing",color=0x6100FF)
      try:
         embed1.add_field(name="Name", value=f"{querytrack}", inline=False)
      except:
@@ -220,7 +218,7 @@ async def play(ctx: lightbulb.Context) -> None:
         querytrack = track['name']
         print(querytrack)
         queryartist = track["artists"][0]["name"]	
-     embed=hikari.Embed(title="Added To The Queue",color=0xFAC800)
+     embed=hikari.Embed(title="Added To The Queue",color=0x6100FF)
      try:
         embed.add_field(name="Name", value=f"{querytrack}", inline=False)
      except:
@@ -254,7 +252,7 @@ async def play(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("stop", "Niko stops the currently playing song. (Type skip if you would like to move onto the next song.)")
+@lightbulb.command("stop", "Niko stops the currently playing song. (Type skip if you would like to move onto the next song.)", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def stop(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -274,7 +272,7 @@ async def stop(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"Stopped {node.now_playing.track.info.title}.", colour=0xD7CBCC)
+    embed = hikari.Embed(title=f"Stopped {node.now_playing.track.info.title}.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -291,7 +289,7 @@ async def stop(ctx: lightbulb.Context) -> None:
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("percentage", "What to change the volume to.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("volume", "Change the volume.")
+@lightbulb.command("volume", "Change the volume.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def volume(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -306,13 +304,13 @@ async def volume(ctx: lightbulb.Context) -> None:
         await ctx.respond(embed=embed)
         return
     await plugin.bot.d.lavalink.volume(ctx.guild_id, int(ctx.options.percentage))
-    embed=hikari.Embed(title=f"Volume is now at {ctx.options.percentage}%", color=0xD7CBCC)
+    embed=hikari.Embed(title=f"Volume is now at {ctx.options.percentage}%", color=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("time", "What time you would like to seek to.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("seek", "Seek to a specific point in a song.")
+@lightbulb.command("seek", "Seek to a specific point in a song.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def seek(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -340,7 +338,7 @@ async def seek(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"Seeked {node.now_playing.track.info.title}.", colour=0xD7CBCC)
+    embed = hikari.Embed(title=f"Seeked {node.now_playing.track.info.title}.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -355,7 +353,7 @@ async def seek(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("replay", "Niko replays the current song.")
+@lightbulb.command("replay", "Niko replays the current song.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def replay(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -370,12 +368,12 @@ async def replay(ctx: lightbulb.Context) -> None:
         await ctx.respond(embed=embed)
         return
     await plugin.bot.d.lavalink.seek_millis(ctx.guild_id, 0000)
-    embed = hikari.Embed(title=f"Replaying {node.now_playing.track.info.title}.", colour=0xD7CBCC)
+    embed = hikari.Embed(title=f"Replaying {node.now_playing.track.info.title}.", colour=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("skip", "Niko skips to the next song (if any).")
+@lightbulb.command("skip", "Niko skips to the next song (if any).", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def skip(ctx: lightbulb.Context) -> None:
     skip = await plugin.bot.d.lavalink.skip(ctx.guild_id)
@@ -392,12 +390,12 @@ async def skip(ctx: lightbulb.Context) -> None:
     else:
         if not node.queue and not node.now_playing:
             await plugin.bot.d.lavalink.stop(ctx.guild_id)
-    embed = hikari.Embed(title=f"Skipped {skip.track.info.title}.", colour=0xD7CBCC)
+    embed = hikari.Embed(title=f"Skipped {skip.track.info.title}.", colour=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("pause", "Niko pauses the currently playing track.")
+@lightbulb.command("pause", "Niko pauses the currently playing track.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def pause(ctx: lightbulb.Context) -> None:
     await plugin.bot.d.lavalink.pause(ctx.guild_id)
@@ -418,7 +416,7 @@ async def pause(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"Paused {node.now_playing.track.info.title}.", colour=0xD7CBCC)
+    embed = hikari.Embed(title=f"Paused {node.now_playing.track.info.title}.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -433,7 +431,7 @@ async def pause(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("resume", "Niko resumes playing the currently playing track.")
+@lightbulb.command("resume", "Niko resumes playing the currently playing track.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def resume(ctx: lightbulb.Context) -> None:
     await plugin.bot.d.lavalink.resume(ctx.guild_id)
@@ -454,7 +452,7 @@ async def resume(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"Resumed {node.now_playing.track.info.title}.", colour=0xD7CBCC)
+    embed = hikari.Embed(title=f"Resumed {node.now_playing.track.info.title}.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -470,7 +468,7 @@ async def resume(ctx: lightbulb.Context) -> None:
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("song", "The name of the song you want lyrics for.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("lyrics", "Niko searches for the lyrics of any song of your choice!")
+@lightbulb.command("lyrics", "Niko searches for the lyrics of any song of your choice!", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def lyrics(ctx: lightbulb.Context) -> None:
      genius = lyricsgenius.Genius(f"{GENIUS_API_KEY}")
@@ -492,7 +490,7 @@ async def lyrics(ctx: lightbulb.Context) -> None:
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]
         queryfinal =f"{queryartist}" + " " + f"{querytrack}"
-     embed2=hikari.Embed(title=f"{querytrack}" ,description=f"{song.lyrics}", color=0xD7CBCC)
+     embed2=hikari.Embed(title=f"{querytrack}" ,description=f"{song.lyrics}", color=0x6100FF)
      await ctx.respond(embed=embed2)
 
 class PlayMenu(neon.ComponentMenu):
@@ -545,7 +543,7 @@ class PlayMenu(neon.ComponentMenu):
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("nowplaying", "See what's currently playing.")
+@lightbulb.command("nowplaying", "See what's currently playing.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def now_playing(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -565,7 +563,7 @@ async def now_playing(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed=hikari.Embed(title="Currently Playing",color=0x34E5FF)
+    embed=hikari.Embed(title="Currently Playing",color=0x6100FF)
     try:
         embed.add_field(name="Name", value=f"{querytrack}", inline=False)
     except:
@@ -627,7 +625,7 @@ class QueueMenu(neon.ComponentMenu):
         hikari.Embed(
             title="The Queue",
             description=f"Here are the next **{len(node.queue)}** tracks.",
-            color=0xD7CBCC,
+            color=0x6100FF,
         )
     )
      i = 1
@@ -658,7 +656,7 @@ class QueueMenu(neon.ComponentMenu):
      await plugin.bot.update_voice_state(self.ctx.guild_id, None)
      await plugin.bot.d.lavalink.wait_for_connection_info_remove(self.ctx.guild_id)
      await _join(self.ctx)
-     embed=hikari.Embed(title="Emptied the queue.",color=0xD7CBCC)
+     embed=hikari.Embed(title="Emptied the queue.",color=0x6100FF)
      await self.edit_msg(embed=embed)
     @neon.on_timeout(disable_components=True)
     async def on_timeout(self) -> None:
@@ -666,7 +664,7 @@ class QueueMenu(neon.ComponentMenu):
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("queue", "Niko shows you the queue.", aliases=["q"])
+@lightbulb.command("queue", "Niko shows you the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def queue(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -685,7 +683,7 @@ async def queue(ctx: lightbulb.Context) -> None:
         hikari.Embed(
             title="The Queue",
             description=f"Here are the next **{len(node.queue)}** tracks.",
-            color=0xD7CBCC,
+            color=0x6100FF,
         )
         .add_field(name="Currently playing", value=f"{node.queue[0].track.info.title}")
     )
@@ -708,7 +706,7 @@ async def queue(ctx: lightbulb.Context) -> None:
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("index", "Index for the song you want to remove.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("remove", "Niko removes a song from the queue.")
+@lightbulb.command("remove", "Niko removes a song from the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def remove(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -740,13 +738,13 @@ async def remove(ctx: lightbulb.Context) -> None:
         pass
     node.queue = queue
     await plugin.bot.d.lavalink.set_guild_node(ctx.guild_id, node)
-    embed = hikari.Embed(title=f"Removed {song_to_be_removed.track.info.title}.",color=0xD7CBCC,)
+    embed = hikari.Embed(title=f"Removed {song_to_be_removed.track.info.title}.",color=0x6100FF,)
     await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("position", "The song's position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("skipto", "Niko goes to a different song in the queue.")
+@lightbulb.command("skipto", "Niko goes to a different song in the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def skipto(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -782,14 +780,14 @@ async def skipto(ctx: lightbulb.Context) -> None:
     node.queue = queue
     await plugin.bot.d.lavalink.set_guild_node(ctx.guild_id, node)
     await plugin.bot.d.lavalink.skip(ctx.guild_id)
-    embed = hikari.Embed(title=f"Skipped to {song_to_be_skipped.track.info.title}.",color=0xD7CBCC)
+    embed = hikari.Embed(title=f"Skipped to {song_to_be_skipped.track.info.title}.",color=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("current_position", "The song's current position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
 @lightbulb.option("new_position", "The song's new position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("move", "Move a song to a different position in the queue.")
+@lightbulb.command("move", "Move a song to a different position in the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def move(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -820,12 +818,12 @@ async def move(ctx: lightbulb.Context) -> None:
         await ctx.respond(embed=embed)
     node.queue = queue
     await plugin.bot.d.lavalink.set_guild_node(ctx.guild_id, node)
-    embed = hikari.Embed(title=f"Moved {song_to_be_moved.track.info.title} to position {new_index}.", color=0xD7CBCC)
+    embed = hikari.Embed(title=f"Moved {song_to_be_moved.track.info.title} to position {new_index}.", color=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("empty", "Niko empties the queue.")
+@lightbulb.command("empty", "Niko empties the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def empty(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -847,12 +845,12 @@ async def empty(ctx: lightbulb.Context) -> None:
     await plugin.bot.update_voice_state(ctx.guild_id, None)
     await plugin.bot.d.lavalink.wait_for_connection_info_remove(ctx.guild_id)
     await _join(ctx)
-    embed=hikari.Embed(title="Emptied the queue.",color=0xD7CBCC)
+    embed=hikari.Embed(title="Emptied the queue.",color=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("recommend", "Niko adds recommended tracks based on what's playing.")
+@lightbulb.command("recommend", "Niko adds recommended tracks based on what's playing.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def recommend(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -870,7 +868,7 @@ async def recommend(ctx: lightbulb.Context) -> None:
     query = urlparse.parse_qs(url_data.query)
     video = query["v"][0]
     print(video)
-    embed=hikari.Embed(title="Recommendations", description="Adding recommended tracks to the queue.", color=0xD7CBCC)
+    embed=hikari.Embed(title="Recommendations", description="Adding recommended tracks to the queue.", color=0x6100FF)
     await ctx.respond(embed=embed)
     ytmusic = YTMusic()
     playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=10)
@@ -926,11 +924,11 @@ class Menu(neon.ComponentMenu):
         
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("invite", "Invite Niko to other servers!")
+@lightbulb.command("invite", "Invite Niko to other servers!", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def invite(ctx: lightbulb.Context) -> None:
     menu = Menu(ctx)
-    embed=hikari.Embed(title="A Few Related Links.",color=0xD7CBCC)
+    embed=hikari.Embed(title="A Few Related Links.",color=0x6100FF)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
 
@@ -942,11 +940,11 @@ class Menu2(neon.ComponentMenu):
         
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("vote", "Vote for Niko!")
+@lightbulb.command("vote", "Vote for Niko!", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def vote(ctx: lightbulb.Context) -> None:
     menu = Menu2(ctx, timeout=60)
-    embed=hikari.Embed(title="Click the button below to vote for me.",color=0xD7CBCC)
+    embed=hikari.Embed(title="Click the button below to vote for me.",color=0x6100FF)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
 
@@ -958,11 +956,11 @@ class Menu3(neon.ComponentMenu):
         
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("support", "Visit my support server!")
+@lightbulb.command("support", "Visit my support server!", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def vote(ctx: lightbulb.Context) -> None:
     menu = Menu3(ctx, timeout=60)
-    embed=hikari.Embed(title="Click the button below to join my support server.",color=0xD7CBCC)
+    embed=hikari.Embed(title="Click the button below to join my support server.",color=0x6100FF)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
 
@@ -977,11 +975,11 @@ class helpmenu(neon.ComponentMenu):
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("help", "See a list of all my commands!")
+@lightbulb.command("help", "See a list of all my commands!", auto_defer=True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def help(ctx: lightbulb.Context) -> None:
     menu = helpmenu(ctx, timeout=200)
-    embed=hikari.Embed(title="Help Center",color=0xD7CBCC)
+    embed=hikari.Embed(title="Help Center",color=0x6100FF)
     embed.add_field(name="/join", value="Niko joins your VC.", inline=True)
     embed.add_field(name="/leave", value="Niko leaves your VC.", inline=True)
     embed.add_field(name="/play", value="Niko plays your song of choice.", inline=True)
@@ -997,6 +995,9 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/seek", value="Seek to a specific part time in a track.", inline=True)
     embed.add_field(name="/lyrics", value="Niko shows you the lyrics for most songs.", inline=True)
     embed.add_field(name="/empty", value="Niko empties the queue.", inline=True)
+    embed.add_field(name="/skipto", value="Niko moves to a different song in the queue.", inline=True)
+    embed.add_field(name="/move", value="Move tracks to different positions in the queue.", inline=True)
+    embed.add_field(name="/ping", value="See Niko's ping.", inline=True)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
 
@@ -1012,12 +1013,12 @@ async def download_command(ctx: lightbulb.Context) -> None:
      decode = json.loads(url.text)
      jiosong = decode[0]['media_url']
      song= decode[0]['song']
-     os.system(f"youtube-dl -o '/root/musicfiles/%(title)s-%(id)s.%(ext)s' {jiosong} -x --audio-format mp3")
-     name = os.listdir("/root/musicfiles/")[0]
-     os.rename(f"/root/musicfiles/{name}", f"/root/musicfiles/{song}.mp3")
-     namefinal = os.listdir("/root/musicfiles")[0]
-     await ctx.respond(attachment=hikari.File(f"/root/musicfiles/{namefinal}"))
-     os.remove(f"/root/musicfiles/{namefinal}")
+     os.system(f"youtube-dl -o '/home/zingy/musicfiles/%(title)s-%(id)s.%(ext)s' {jiosong} -x --audio-format mp3")
+     name = os.listdir("/home/zingy/musicfiles/")[0]
+     os.rename(f"/home/zingy/musicfiles/{name}", f"/home/zingy/musicfiles/{song}.mp3")
+     namefinal = os.listdir("/home/zingy/musicfiles")[0]
+     await ctx.respond(attachment=hikari.File(f"/home/zingy/musicfiles/{namefinal}"), flags=hikari.MessageFlag.EPHEMERAL)
+     os.remove(f"/home/zingy/musicfiles/{namefinal}")
 
 if HIKARI_VOICE:
 
