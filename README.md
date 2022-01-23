@@ -21,14 +21,10 @@ services:
   lavalink:
     image: zingytomato/lavalink
     container_name: lavalink
-    ports:
-      - 2333
     restart: unless-stopped
   jiosaavnapi:
     image: zingytomato/jiosaavnapi
     container_name: jiosaavnapi
-    ports:
-      - 5000
     restart: unless-stopped
 ```
 ## .env Example
