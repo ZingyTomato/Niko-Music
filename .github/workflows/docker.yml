@@ -24,7 +24,7 @@ jobs:
           docker login -u $DOCKER_USER -p $DOCKER_PASS
       - name: Docker Build Niko Music
         run: |
-         docker build . -t zingytomato/nikomusic:latest 
+         docker build ./music -t zingytomato/nikomusic:latest 
       - name: Push to Docker Hub
         run: |
           docker push zingytomato/nikomusic:latest 
