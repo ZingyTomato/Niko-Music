@@ -17,12 +17,12 @@ import os
 HIKARI_VOICE = False
 URL_REGEX = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
 TIME_REGEX = r"([0-9]{1,2})[:ms](([0-9]{1,2})s?)?"
-SPOTCLIENT_ID="SPOTIFY CLIENT ID"
-SPOTCLIENT_SECRET="SPOTIFY CLIENT SECRET"
-GENIUS_API_KEY="GENIUS API KEY"
-TOKEN="DISCORD BOT TOKEN
-LAVALINK_SERVER="LAVALINK SERVER URL OR IP"
-LAVALINK_PASSWORD="LAVALINK PASSWORD"
+SPOTCLIENT_ID=os.getenv("SPOTID")
+SPOTCLIENT_SECRET=os.getenv("SPOTSECRET")
+GENIUS_API_KEY=os.getenv("GENAPI")
+TOKEN=os.getenv("TOKEN")
+LAVALINK_SERVER="lavalink"
+LAVALINK_PASSWORD="nikomusic"
 
 class EventHandler:
 
