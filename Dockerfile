@@ -3,7 +3,6 @@ FROM python:3.8-slim-bullseye
 WORKDIR /NikoMusic
 
 COPY music/ music/
-COPY musicfiles/ musicfiles/
 
 RUN apt update -y && apt upgrade -y
 RUN apt install git youtube-dl -y
