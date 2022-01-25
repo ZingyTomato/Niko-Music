@@ -4,6 +4,8 @@ A free and open source discord bot with no pay-wall. Made using Hikari, Lightbul
 
 Invite him to your server!: https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands
 
+Docker Image : https://hub.docker.com/r/zingytomato/nikomusic
+
 # Deployment with Docker
 
 ## Example compose.yml file
@@ -34,5 +36,3 @@ services:
 - SPOTCLIENTSECRET = Spotify Client SECRET from https://developer.spotify.com/dashboard/applications
 - GENAPIKEY = Genius Client ID from https://genius.com/api-clients
 ```
-
-Docker Image : https://hub.docker.com/r/zingytomato/nikomusic
