@@ -2,7 +2,7 @@ import os
 import hikari
 import lightbulb
 
-bot = lightbulb.BotApp(token="BOT TOKEN", prefix="niko ")
+bot = lightbulb.BotApp(os.getenv("TOKEN"), prefix="niko ")
 
 @bot.listen()
 async def starting_load_extensions(_: hikari.StartingEvent) -> None:
