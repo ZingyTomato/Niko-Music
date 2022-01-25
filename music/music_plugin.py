@@ -54,7 +54,7 @@ async def _join(ctx: lightbulb.Context) -> Optional[hikari.Snowflake]:
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
 
     if not voice_state:
-        embed = hikari.Embed(title="You are not in a voice channel.", colour=0xC80000)
+        embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return None
 
@@ -124,7 +124,7 @@ async def leave(ctx: lightbulb.Context) -> None:
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("song", "The name of the song you want to play.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("play", "Niko searches for your song.", auto_defer=True)
+@lightbulb.command("play", "Niko searches for your song.")
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def play(ctx: lightbulb.Context) -> None:
     query = ctx.options.song
@@ -174,7 +174,7 @@ async def play(ctx: lightbulb.Context) -> None:
     else:
         query_information = await plugin.bot.d.lavalink.get_tracks(query)
     if not query_information.tracks:
-        embed = hikari.Embed(title="**Unable to find any songs! Try to include the artists name as well!**", colour=0xC80000)
+        embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artist name as well.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
     node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
@@ -183,19 +183,18 @@ async def play(ctx: lightbulb.Context) -> None:
      results = sp.search(q=f'{query}', limit=1)
      for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
-        print(querytrack)
         queryartist = track["artists"][0]["name"]	
      embed1=hikari.Embed(title="**Now Playing**",color=0x6100FF)
      try:
-        embed1.add_field(name="Name", value=f"{querytrack}", inline=False)
+        embed1.add_field(name="Name", value=f"{[querytrack]}({track['external_urls']['spotify']})", inline=False)
      except:
         embed1.add_field(name="Name", value=f"{query_information.tracks[0].info.title}", inline=False)
      try:
-        embed1.add_field(name="Artist", value=f"{queryartist}", inline=False)
+        embed1.add_field(name="Artist", value=f"{[queryartist]}({track['artists'][0]['external_urls']['spotify']})", inline=False)
      except:
         embed1.add_field(name="Artist", value=f"{query_information.tracks[0].info.author}", inline=False)
      try:
-        embed1.add_field(name="Album", value=f"{track['album']['name']}", inline=False)
+        embed1.add_field(name="Album", value=f"{[track['album']['name']]}({track['album']['external_urls']['spotify']})", inline=False)
      except:
         pass
      try:
@@ -219,17 +218,17 @@ async def play(ctx: lightbulb.Context) -> None:
         querytrack = track['name']
         print(querytrack)
         queryartist = track["artists"][0]["name"]	
-     embed=hikari.Embed(title="**Added To The Queue**",color=0x6100FF)
+     embed=hikari.Embed(title="**Queued Track**",color=0x6100FF)
      try:
-        embed.add_field(name="Name", value=f"{querytrack}", inline=False)
+        embed.add_field(name="Name", value=f"{[querytrack]}({track['external_urls']['spotify']})", inline=False)
      except:
         embed.add_field(name="Name", value=f"{query_information.tracks[0].info.title}", inline=False)
      try:
-        embed.add_field(name="Artist", value=f"{queryartist}", inline=False)
+        embed.add_field(name="Artist", value=f"{[queryartist]}({track['artists'][0]['external_urls']['spotify']})", inline=False)
      except:
         embed.add_field(name="Artist", value=f"{query_information.tracks[0].info.author}", inline=False)
      try:
-        embed.add_field(name="Album", value=f"{track['album']['name']}", inline=False)
+        embed.add_field(name="Album", value=f"{[track['album']['name']]}({track['album']['external_urls']['spotify']})", inline=False)
      except:
         pass
      try:
@@ -522,15 +521,15 @@ async def now_playing(ctx: lightbulb.Context) -> None:
         queryartist = track["artists"][0]["name"]	
     embed=hikari.Embed(title="**Currently Playing**",color=0x6100FF)
     try:
-        embed.add_field(name="Name", value=f"{querytrack}", inline=False)
+        embed.add_field(name="Name", value=f"{[querytrack]}({track['external_urls']['spotify']})", inline=False)
     except:
         embed.add_field(name="Name", value=f"{node.now_playing.track.info.title}", inline=False)
     try:
-        embed.add_field(name="Artist", value=f"{queryartist}", inline=False)
+        embed.add_field(name="Artist", value=f"{[queryartist]}({track['artists'][0]['external_urls']['spotify']})", inline=False)
     except:
         embed.add_field(name="Artist", value=f"{node.now_playing.track.info.author}", inline=False)
     try:
-        embed.add_field(name="Album", value=f"{track['album']['name']}", inline=False)
+        embed.add_field(name="Album", value=f"{[track['album']['name']]}({track['album']['external_urls']['spotify']})", inline=False)
     except:
         pass
     try:
