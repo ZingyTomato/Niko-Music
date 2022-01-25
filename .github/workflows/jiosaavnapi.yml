@@ -24,7 +24,7 @@ jobs:
           docker login -u $DOCKER_USER -p $DOCKER_PASS
       - name: Docker Build Niko Music
         run: |
-         docker build ./lavalink -t zingytomato/jiosaavnapi:latest 
+         docker build ./jiosaavnapi -t zingytomato/jiosaavnapi:latest 
       - name: Push to Docker Hub
         run: |
           docker push zingytomato/jiosaavnapi:latest 
