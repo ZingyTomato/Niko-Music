@@ -1,4 +1,4 @@
-name: Build Lavalink Docker Image
+name: Build JiosaavnAPI Docker Image
 on:
   push:
     branches: [ main ]
