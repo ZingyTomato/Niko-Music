@@ -160,7 +160,7 @@ async def play(ctx: lightbulb.Context) -> None:
           await plugin.bot.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
          except:
           pass
-        embed=hikari.Embed(title="Added Playlist To The Queue.", color=0x6100FF)
+        embed=hikari.Embed(title="**Added Playlist To The Queue.**", color=0x6100FF)
         return await ctx.respond(embed=embed)
     if "https://open.spotify.com/album" in ctx.options.song:	
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -176,7 +176,7 @@ async def play(ctx: lightbulb.Context) -> None:
           await plugin.bot.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
          except:
           pass
-        embed=hikari.Embed(title="Added Album To The Queue.", color=0x6100FF)
+        embed=hikari.Embed(title="**Added Album To The Queue.**", color=0x6100FF)
         return await ctx.respond(embed=embed)
     if not re.match(URL_REGEX, query):
       result = f"ytmsearch:{query}"
@@ -584,7 +584,10 @@ async def queue(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
         pass
-    embed.add_field(name="Currently playing", value=f"{[node.queue[0].track.info.title]}({track['external_urls']['spotify']})")
+    try:
+      embed.add_field(name="Currently playing", value=f"{[node.queue[0].track.info.title]}({track['external_urls']['spotify']})")
+    except:
+      embed.add_field(name="Currently playing", value=f"{node.queue[0].track.info.title}")  
     i = 1
     if len(node.queue) > 1:
         embed.add_field(name="Upcoming", value=f"\n".join([f'**{i}.** {tq.track.info.title}' for i, tq in enumerate(node.queue[1:], start=1)]))
