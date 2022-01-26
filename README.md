@@ -12,7 +12,7 @@ Docker Image : https://hub.docker.com/r/zingytomato/nikomusic
 
 ```
 ---
-version: "2.1"
+version: "2.1 "
 services:
   nikomusic:
     image: zingytomato/nikomusic
