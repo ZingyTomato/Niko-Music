@@ -124,7 +124,7 @@ async def leave(ctx: lightbulb.Context) -> None:
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("song", "The name of the song you want to play.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("play", "Niko searches for your song.")
+@lightbulb.command("play", "Niko searches for your song.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def play(ctx: lightbulb.Context) -> None:
     query = ctx.options.song
@@ -156,8 +156,13 @@ async def play(ctx: lightbulb.Context) -> None:
          queryfinal = f"{track_name} " + " " + f"{track_artist}" 
          result = f"ytmsearch:{queryfinal}"
          query_information = await plugin.bot.d.lavalink.get_tracks(result)
-         await plugin.bot.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
-    if "https://open.spotify.com/album" in query:	
+         try:
+          await plugin.bot.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
+         except:
+          pass
+        embed=hikari.Embed(title="Added Playlist To The Queue.", color=0x6100FF)
+        return await ctx.respond(embed=embed)
+    if "https://open.spotify.com/album" in ctx.options.song:	
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
         album_link = f"{query}"
         album_id= album_link.split("/")[-1].split("?")[0]
@@ -167,7 +172,12 @@ async def play(ctx: lightbulb.Context) -> None:
          queryfinal = f"{track_name} " + f"{track_artist}" 
          result = f"ytmsearch:{queryfinal}"
          query_information = await plugin.bot.d.lavalink.get_tracks(result)
-         await plugin.bot.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
+         try:
+          await plugin.bot.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
+         except:
+          pass
+        embed=hikari.Embed(title="Added Album To The Queue.", color=0x6100FF)
+        return await ctx.respond(embed=embed)
     if not re.match(URL_REGEX, query):
       result = f"ytmsearch:{query}"
       query_information = await plugin.bot.d.lavalink.get_tracks(result)
@@ -560,22 +570,11 @@ async def queue(ctx: lightbulb.Context) -> None:
         await ctx.respond(embed=embed)
         return None
     node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
-
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    embed = (
-        hikari.Embed(
-            title="**The Queue**",
-            description=f"Here are the next **{len(node.queue)}** tracks.",
-            color=0x6100FF,
-        )
-        .add_field(name="Currently playing", value=f"{node.queue[0].track.info.title}")
-    )
-    i = 1
-    if len(node.queue) > 1:
-        embed.add_field(name="Upcoming", value=f"\n".join([f'**{i}.** {tq.track.info.title}' for i, tq in enumerate(node.queue[1:], start=1)]))
+    embed = hikari.Embed(title="**The Queue**",description=f"Here are the next **{len(node.queue)}** tracks.",color=0x6100FF)
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f'{node.now_playing.track.info.author} {node.now_playing.track.info.title}', limit=1)
     for idx, track in enumerate(results['tracks']['items']):
@@ -585,8 +584,12 @@ async def queue(ctx: lightbulb.Context) -> None:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
         pass
+    embed.add_field(name="Currently playing", value=f"{[node.queue[0].track.info.title]}({track['external_urls']['spotify']})")
+    i = 1
+    if len(node.queue) > 1:
+        embed.add_field(name="Upcoming", value=f"\n".join([f'**{i}.** {tq.track.info.title}' for i, tq in enumerate(node.queue[1:], start=1)]))
     await ctx.respond(embed=embed)
-
+    
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("index", "Index for the song you want to remove.", modifier=lightbulb.OptionModifier.CONSUME_REST)
