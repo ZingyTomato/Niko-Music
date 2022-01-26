@@ -4,6 +4,8 @@ services:
   lavalink:
     image: zingytomato/lavalink
     container_name: lavalink
+    environment: 
+      - PASSWORD= "password"
     ports:
       - 2333:2333
     restart: unless-stopped
