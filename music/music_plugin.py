@@ -142,7 +142,7 @@ async def play(ctx: lightbulb.Context) -> None:
     if "youtube" in query:
         embed=hikari.Embed(title="**Supported Platforms : Soundcloud, Spotify, Bandcamp, Vimeo, Twitch and HTTP Streams.**", color=0xC80000)
         return await ctx.respond(embed=embed)
-    if "you.tube" in query:
+    if "youtu.be" in query:
         embed=hikari.Embed(title="**Supported Platforms : Soundcloud, Spotify, Bandcamp, Vimeo, Twitch and HTTP Streams.**", color=0xC80000)
         return await ctx.respond(embed=embed)
     if "https://open.spotify.com/playlist" in ctx.options.song:
@@ -737,7 +737,44 @@ async def empty(ctx: lightbulb.Context) -> None:
     await _join(ctx)
     embed=hikari.Embed(title="**Emptied the queue.**",color=0x6100FF)
     await ctx.respond(embed=embed)
+    
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.command("newreleases", "See the latest releases for the day.", auto_defer=True)
+@lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
+async def newreleases(ctx: lightbulb.Context) -> None:
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+    response = sp.new_releases(limit=21)
+    albums = response['albums']
+    today = date.today()
+    embed=hikari.Embed(title=f"**New Releases - {today}**", color=0x6100FF)
+    embed.add_field(name="Latest Tracks", value=f"\n".join([f"**{i}.** {item['name']}" for i, item in enumerate(albums['items'][1:], start=1)]))
+    img = response['albums']['items'][1]['images'][0]['url']
+    try:
+      embed.set_thumbnail(img)
+    except:
+        pass
+    await ctx.respond(embed=embed)
 
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.command("trending", "See the latest trending tracks.", auto_defer=True)
+@lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
+async def trending(ctx: lightbulb.Context) -> None:
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+    playlist_URI = "37i9dQZF1DXcBWIGoYBM5M"
+    track_uris = [x["track"]["uri"] for x in sp.playlist_tracks(playlist_URI)["items"]]
+    track = sp.track(track_uris[1])
+    today = date.today()
+    embed=hikari.Embed(title=f"**Trending Tracks - {today}**", color=0x6100FF)
+    embed.add_field(name="Top 20 Tracks Of The Day", value=f"\n".join([f"**{i}.** {track['track']['name']}" for i, track in enumerate(sp.playlist_tracks(playlist_URI, limit=21)["items"][1:], start=1)]))
+    img = track['album']['images'][0]['url']
+    try:
+      embed.set_thumbnail(img)
+    except:
+        pass
+    await ctx.respond(embed=embed)
+    
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("recommend", "Niko adds recommended tracks based on what's playing.", auto_defer=True)
