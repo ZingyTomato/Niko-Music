@@ -928,25 +928,6 @@ async def help(ctx: lightbulb.Context) -> None:
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
 
-@plugin.command()
-@lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("query", "song query", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("download", "downloads music.")
-@lightbulb.implements(lightbulb.PrefixCommand)
-async def download_command(ctx: lightbulb.Context) -> None:
-    query = ctx.options.query.strip("<>")
-    if not re.match(URL_REGEX, query):
-     url = requests.get(f"http://jiosaavnapi:5000/result/?query={query}")
-     decode = json.loads(url.text)
-     jiosong = decode[0]['media_url']
-     song= decode[0]['song']
-     os.system(f"youtube-dl -o '/musicfiles/%(title)s-%(id)s.%(ext)s' {jiosong} -x --audio-format mp3")
-     name = os.listdir("/musicfiles/")[0]
-     os.rename(f"/musicfiles/{name}", f"/musicfiles/{song}.mp3")
-     namefinal = os.listdir("/musicfiles/")[0] 
-     await ctx.respond(attachment=hikari.File(f"/musicfiles/{namefinal}"))
-     os.remove(f"/musicfiles/{namefinal}")
-
 if HIKARI_VOICE:
 
     @plugin.listener(hikari.VoiceStateUpdateEvent)
