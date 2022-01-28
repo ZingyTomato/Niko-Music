@@ -24,10 +24,6 @@ services:
     image: zingytomato/lavalink
     container_name: lavalink
     restart: unless-stopped
-  jiosaavnapi:
-    image: zingytomato/jiosaavnapi
-    container_name: jiosaavnapi
-    restart: unless-stopped
 ```
 ## .env Example
 ```
