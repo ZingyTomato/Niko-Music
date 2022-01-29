@@ -6,7 +6,7 @@ COPY application.yml application.yml
 
 RUN apt update -y && apt upgrade -y
 RUN apt install wget -y
-RUN wget https://github.com/freyacodes/Lavalink/releases/download/3.4/Lavalink.jar
+RUN wget https://github.com/freyacodes/Lavalink/releases/latest/download/lavalink.jar
 
 EXPOSE 2333
 
