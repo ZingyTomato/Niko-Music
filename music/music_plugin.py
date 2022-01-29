@@ -180,12 +180,22 @@ async def play(ctx: lightbulb.Context) -> None:
         embed=hikari.Embed(title="**Added Album To The Queue.**", color=0x6100FF)
         return await ctx.respond(embed=embed)
     if not re.match(URL_REGEX, query):
-      result = f"ytmsearch:{query}"
+      sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+      results = sp.search(q=f'{query}', limit=1)
+      for idx, track in enumerate(results['tracks']['items']):
+        querytrack = track['name']
+        queryartist = track["artists"][0]["name"]
+      try:
+        queryfinal = f"{querytrack}" + " " + f"{queryartist}"
+      except:
+        embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+      result = f"ytmsearch:{queryfinal}"
       query_information = await plugin.bot.d.lavalink.get_tracks(result)
     else:
         query_information = await plugin.bot.d.lavalink.get_tracks(query)
     if not query_information.tracks:
-        embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artist name as well.**", colour=0xC80000)
+        embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
     node = await plugin.bot.d.lavalink.get_guild_node(ctx.guild_id)
