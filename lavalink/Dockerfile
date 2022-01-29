@@ -10,4 +10,4 @@ RUN wget https://github.com/freyacodes/Lavalink/releases/latest/download/lavalin
 
 EXPOSE 2333
 
-CMD ["java", "-jar", "Lavalink.jar"]
+CMD ["java", "-jar", "lavalink.jar"]
