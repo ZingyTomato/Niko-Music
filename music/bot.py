@@ -1,6 +1,9 @@
 import os
 import hikari
 import lightbulb
+import dotenv
+
+dotenv.load_dotenv()
 
 bot = lightbulb.BotApp(os.getenv("TOKEN"), prefix="niko ")
 
