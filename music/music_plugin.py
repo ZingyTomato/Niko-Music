@@ -312,7 +312,7 @@ async def stop(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("percentage", "What to change the volume to.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("percentage", "What to change the volume to.", int, required = True)
 @lightbulb.command("volume", "Change the volume.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def volume(ctx: lightbulb.Context) -> None:
@@ -327,7 +327,7 @@ async def volume(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    await plugin.d.lavalink.volume(ctx.guild_id, int(ctx.options.percentage))
+    await plugin.d.lavalink.volume(ctx.guild_id, ctx.options.percentage)
     embed=hikari.Embed(title=f"**Volume is now at {ctx.options.percentage}%**", color=0x6100FF)
     await ctx.respond(embed=embed)
 
@@ -351,6 +351,7 @@ async def seek(ctx: lightbulb.Context) -> None:
     if not (match := re.match(TIME_REGEX, ctx.options.time)):
             embed = hikari.Embed(title="**Invalid time entered.**", colour=0xC80000)
             await ctx.respond(embed=embed)
+            return
     if match.group(3):
             secs = (int(match.group(1)) * 60) + (int(match.group(3)))
     else:
