@@ -5,7 +5,7 @@ import dotenv
 
 dotenv.load_dotenv()
 
-bot = lightbulb.BotApp(os.getenv("TOKEN"), prefix="niko ")
+bot = lightbulb.BotApp(os.getenv("TOKEN"))
 
 @bot.listen()
 async def starting_load_extensions(_: hikari.StartingEvent) -> None:
