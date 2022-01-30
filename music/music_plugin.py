@@ -182,6 +182,18 @@ async def play(ctx: lightbulb.Context) -> None:
           pass
         embed=hikari.Embed(title="**Added Album To The Queue.**", color=0x6100FF)
         return await ctx.respond(embed=embed)
+    if "https://open.spotify.com/track" in ctx.options.song:
+        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+        track_link = f"{query}"
+        track_id= track_link.split("/")[-1].split("?")[0]
+        track = f"spotify:track:{track_id}"
+        spotifytrack = sp.track(track)
+        trackname = spotifytrack['name'] + " " + spotifytrack["artists"][0]["name"]
+        result = f"ytmsearch:{trackname}"
+        query_information = await plugin.d.lavalink.get_tracks(result)   
+        await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
+        embed=hikari.Embed(title="Added Song To The Queue",color=0x6100FF) 
+        return await ctx.respond(embed=embed) 
     if not re.match(URL_REGEX, query):
       sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
       results = sp.search(q=f'{query}', limit=1)
