@@ -204,7 +204,7 @@ async def play(ctx: lightbulb.Context) -> None:
         queryfinal = f"{querytrack}" + " " + f"{queryartist}"
       except:
         embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
-        await ctx.respond(embed=embed)
+        return await ctx.respond(embed=embed)
       result = f"ytmsearch:{queryfinal}"
       query_information = await plugin.d.lavalink.get_tracks(result)
     else:
@@ -424,6 +424,7 @@ async def skip(ctx: lightbulb.Context) -> None:
     if not skip:
         embed = hikari.Embed(title="**There are no more tracks left in the queue.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        return
     else:
         if not node.queue and not node.now_playing:
             await plugin.d.lavalink.stop(ctx.guild_id)
@@ -648,7 +649,7 @@ async def remove(ctx: lightbulb.Context) -> None:
      song_to_be_removed = queue[index]
     except:
         embed = hikari.Embed(title=f"**Incorrect position entered.**",color=0xC80000)
-        await ctx.respond(embed=embed)
+        return await ctx.respond(embed=embed)
     try:
         queue.pop(index)
     except:
@@ -690,7 +691,7 @@ async def skipto(ctx: lightbulb.Context) -> None:
      song_to_be_skipped = queue[index]
     except:
         embed = hikari.Embed(title=f"**Incorrect position entered.**",color=0xC80000)
-        await ctx.respond(embed=embed)
+        return await ctx.respond(embed=embed)
     queue.insert(1, queue[index])
     queue.pop(index)
     queue.pop(index)
@@ -725,6 +726,7 @@ async def move(ctx: lightbulb.Context) -> None:
     if not len(node.queue) >= 1:
         embed = hikari.Embed(title=f"**There is only 1 song in the queue.**",color=0xC80000)
         await ctx.respond(embed=embed)
+        return
     queue = node.queue
     song_to_be_moved = queue[old_index]
     try:
@@ -733,6 +735,7 @@ async def move(ctx: lightbulb.Context) -> None:
     except:
         embed = hikari.Embed(title=f"**Incorrect position entered.**",color=0xC80000)
         await ctx.respond(embed=embed)
+        return
     node.queue = queue
     await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
     embed = hikari.Embed(title=f"**Moved {song_to_be_moved.track.info.title} to position {new_index}.**", color=0x6100FF)
