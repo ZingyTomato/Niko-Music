@@ -952,6 +952,9 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/skipto", value="Niko moves to a different song in the queue.", inline=True)
     embed.add_field(name="/move", value="Move tracks to different positions in the queue.", inline=True)
     embed.add_field(name="/ping", value="See Niko's ping.", inline=True)
+    embed.add_field(name="/newreleases", value="See the latest releases for the day.", inline=True)
+    embed.add_field(name="/trending", value="See the latest trending tracks for the day.", inline=True)
+    embed.add_field(name="/invite", value="Invite niko to other servers.", inline=True)
     msg = await ctx.respond(embed=embed, components=menu.build())
     await menu.run(msg)
 
