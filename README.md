@@ -6,6 +6,8 @@ Invite him to your server!: https://discord.com/api/oauth2/authorize?client_id=9
 
 Docker Image : https://hub.docker.com/r/zingytomato/nikomusic
 
+Support Server : https://discord.gg/grSvEPYtDF
+
 # Deployment with Docker
 
 ## Example compose.yml file
