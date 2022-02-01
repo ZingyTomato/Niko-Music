@@ -15,6 +15,7 @@ import json
 import os
 import dotenv
 from datetime import date
+import asyncio
 
 dotenv.load_dotenv()
 
@@ -30,9 +31,8 @@ LAVALINK_PASSWORD="nikomusic"
 
 class EventHandler:
 
-    async def track_start(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackStart) -> None:
+    async def track_start(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackStart) -> True:
         logging.info("Track started on guild: %s", event.guild_id)
-        
 
     async def track_finish(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
         logging.info("Track finished on guild: %s", event.guild_id)
@@ -60,6 +60,8 @@ async def _join(ctx: lightbulb.Context) -> Optional[hikari.Snowflake]:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
 
     channel_id = voice_state[0].channel_id
@@ -92,6 +94,7 @@ async def start_lavalink(event: hikari.ShardReadyEvent) -> None:
     lava_client = await builder.build(EventHandler())
     plugin.d.lavalink = lava_client
 
+
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("join", "Niko joins your voice channel", auto_defer=True)
@@ -101,6 +104,8 @@ async def join(ctx: lightbulb.Context) -> None:
     if channel_id:
         embed = hikari.Embed(title="**Joined voice channel.**", colour=0x6100FF)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(600)
+        await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -115,8 +120,10 @@ async def leave(ctx: lightbulb.Context) -> None:
             await plugin.bot.update_voice_state(ctx.guild_id, None)
             await plugin.d.lavalink.wait_for_connection_info_remove(ctx.guild_id)
     if not voice_state:
-        embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0x6100FF)
+        embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     else:
         await plugin.d.lavalink.leave(ctx.guild_id)
@@ -124,6 +131,8 @@ async def leave(ctx: lightbulb.Context) -> None:
     await plugin.d.lavalink.remove_guild_from_loops(ctx.guild_id)
     embed = hikari.Embed(title="**Left voice channel.**", colour=0x6100FF)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -137,18 +146,28 @@ async def play(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     if not query:
         embed = hikari.Embed(title="**Please enter a song to play.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     await _join(ctx)
     if "youtube" in query:
         embed=hikari.Embed(title="**Supported Platforms : Soundcloud, Spotify, Bandcamp, Vimeo, Twitch and HTTP Streams.**", color=0xC80000)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
+        return
     if "youtu.be" in query:
         embed=hikari.Embed(title="**Supported Platforms : Soundcloud, Spotify, Bandcamp, Vimeo, Twitch and HTTP Streams.**", color=0xC80000)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
+        return
     if "https://open.spotify.com/playlist" in ctx.options.song:
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
         playlist_link = f"{ctx.options.song}"
@@ -165,7 +184,10 @@ async def play(ctx: lightbulb.Context) -> None:
          except:
           pass
         embed=hikari.Embed(title="**Added Playlist To The Queue.**", color=0x6100FF)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(600)
+        await ctx.delete_last_response()
+        return
     if "https://open.spotify.com/album" in ctx.options.song:	
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
         album_link = f"{query}"
@@ -181,7 +203,10 @@ async def play(ctx: lightbulb.Context) -> None:
          except:
           pass
         embed=hikari.Embed(title="**Added Album To The Queue.**", color=0x6100FF)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(600)
+        await ctx.delete_last_response()
+        return
     if "https://open.spotify.com/track" in ctx.options.song:
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
         track_link = f"{query}"
@@ -193,7 +218,10 @@ async def play(ctx: lightbulb.Context) -> None:
         query_information = await plugin.d.lavalink.get_tracks(result)   
         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
         embed=hikari.Embed(title="Added Song To The Queue",color=0x6100FF) 
-        return await ctx.respond(embed=embed) 
+        await ctx.respond(embed=embed) 
+        await asyncio.sleep(600)
+        await ctx.delete_last_response()
+        return
     if not re.match(URL_REGEX, query):
       sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
       results = sp.search(q=f'{query}', limit=1)
@@ -204,7 +232,10 @@ async def play(ctx: lightbulb.Context) -> None:
         queryfinal = f"{querytrack}" + " " + f"{queryartist}"
       except:
         embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
+        return
       result = f"ytmsearch:{queryfinal}"
       query_information = await plugin.d.lavalink.get_tracks(result)
     else:
@@ -212,6 +243,8 @@ async def play(ctx: lightbulb.Context) -> None:
     if not query_information.tracks:
         embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
@@ -247,6 +280,8 @@ async def play(ctx: lightbulb.Context) -> None:
      except:
         pass
      await ctx.respond(embed=embed1)
+     await asyncio.sleep(600)
+     await ctx.delete_last_response()
     else:
      sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
      results = sp.search(q=f'{query}', limit=1)
@@ -281,6 +316,8 @@ async def play(ctx: lightbulb.Context) -> None:
      except:
         pass
      await ctx.respond(embed=embed)
+     await asyncio.sleep(600)
+     await ctx.delete_last_response()
     try:
         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
     except lavasnek_rs.NoSessionPresent:
@@ -296,11 +333,15 @@ async def stop(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
@@ -321,6 +362,8 @@ async def stop(ctx: lightbulb.Context) -> None:
         pass
     await plugin.d.lavalink.stop(ctx.guild_id)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -333,15 +376,21 @@ async def volume(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     await plugin.d.lavalink.volume(ctx.guild_id, ctx.options.percentage)
     embed=hikari.Embed(title=f"**Volume is now at {ctx.options.percentage}%**", color=0x6100FF)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -354,15 +403,21 @@ async def seek(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     if not (match := re.match(TIME_REGEX, ctx.options.time)):
             embed = hikari.Embed(title="**Invalid time entered.**", colour=0xC80000)
             await ctx.respond(embed=embed)
+            await asyncio.sleep(60)
+            await ctx.delete_last_response()
             return
     if match.group(3):
             secs = (int(match.group(1)) * 60) + (int(match.group(3)))
@@ -387,6 +442,8 @@ async def seek(ctx: lightbulb.Context) -> None:
     except:
         pass
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -398,15 +455,21 @@ async def replay(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     await plugin.d.lavalink.seek_millis(ctx.guild_id, 0000)
     embed = hikari.Embed(title=f"**Replaying {node.now_playing.track.info.title}.**", colour=0x6100FF)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -420,16 +483,22 @@ async def skip(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     if not skip:
         embed = hikari.Embed(title="**There are no more tracks left in the queue.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     else:
         if not node.queue and not node.now_playing:
             await plugin.d.lavalink.stop(ctx.guild_id)
     embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", colour=0x6100FF)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -442,11 +511,15 @@ async def pause(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
@@ -466,6 +539,8 @@ async def pause(ctx: lightbulb.Context) -> None:
     except:
         pass
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -478,11 +553,15 @@ async def resume(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
@@ -502,6 +581,8 @@ async def resume(ctx: lightbulb.Context) -> None:
     except:
         pass
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -519,6 +600,9 @@ async def lyrics(ctx: lightbulb.Context) -> None:
      except:
       embed = hikari.Embed(title="**Unable to find any lyrics!**", colour=0xC80000)
       await ctx.respond(embed=embed)
+      await asyncio.sleep(60)
+      await ctx.delete_last_response()
+      return
      total = 1
      for i in range(len(test_stirng)):
        if(test_stirng[i] == ' ' or test_stirng == '\n' or test_stirng == '\t'):
@@ -526,6 +610,8 @@ async def lyrics(ctx: lightbulb.Context) -> None:
      if total > 650:
        embed=hikari.Embed(title="**Character Limit Exceeded!**", description=f"The lyrics in this song are too long. (Over 6000 characters)", color=0xC80000)
        await ctx.respond(embed=embed)
+       await asyncio.sleep(60)
+       await ctx.delete_last_response()
      sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
      results = sp.search(q=f'{ctx.options.song}', limit=1)
      for idx, track in enumerate(results['tracks']['items']):
@@ -534,6 +620,8 @@ async def lyrics(ctx: lightbulb.Context) -> None:
         queryfinal =f"{queryartist}" + " " + f"{querytrack}"
      embed2=hikari.Embed(title=f"**{querytrack}**" ,description=f"{song.lyrics}", color=0x6100FF)
      await ctx.respond(embed=embed2)
+     await asyncio.sleep(600)
+     await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -545,11 +633,15 @@ async def now_playing(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
     results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
@@ -585,6 +677,8 @@ async def now_playing(ctx: lightbulb.Context) -> None:
     except:
         pass
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -596,11 +690,15 @@ async def queue(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     embed = hikari.Embed(title="**The Queue**",description=f"Here are the next **{len(node.queue)}** tracks.",color=0x6100FF)
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -620,6 +718,8 @@ async def queue(ctx: lightbulb.Context) -> None:
     if len(node.queue) > 1:
         embed.add_field(name="Upcoming", value=f"\n".join([f'**{i}.** {tq.track.info.title}' for i, tq in enumerate(node.queue[1:], start=1)]))
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
     
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -632,24 +732,32 @@ async def remove(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
-
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     index = int(ctx.options.index)
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if index == 0:
         embed = hikari.Embed(title=f"**You cannot remove a song that is currently playing.**",color=0xC80000)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
+        return
     try:
      queue = node.queue
      song_to_be_removed = queue[index]
     except:
         embed = hikari.Embed(title=f"**Incorrect position entered.**",color=0xC80000)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
     try:
         queue.pop(index)
     except:
@@ -658,6 +766,8 @@ async def remove(ctx: lightbulb.Context) -> None:
     await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
     embed = hikari.Embed(title=f"**Removed {song_to_be_removed.track.info.title}.**",color=0x6100FF,)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -670,28 +780,39 @@ async def skipto(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
-
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     index = int(ctx.options.position)
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if index == 0:
         embed = hikari.Embed(title=f"**You cannot move to a song that is currently playing.**",color=0xC80000)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
+        return
     if index == 1:
         embed = hikari.Embed(title=f"**Skipping to the next song.**",color=0xC80000)
         await plugin.d.lavalink.skip(ctx.guild_id)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
+        return
     try:
      queue = node.queue
      song_to_be_skipped = queue[index]
     except:
         embed = hikari.Embed(title=f"**Incorrect position entered.**",color=0xC80000)
-        return await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
     queue.insert(1, queue[index])
     queue.pop(index)
     queue.pop(index)
@@ -700,6 +821,8 @@ async def skipto(ctx: lightbulb.Context) -> None:
     await plugin.d.lavalink.skip(ctx.guild_id)
     embed = hikari.Embed(title=f"**Skipped to {song_to_be_skipped.track.info.title}.**",color=0x6100FF)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -713,12 +836,15 @@ async def move(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
-
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     new_index = int(ctx.options.new_position)
     old_index = int(ctx.options.current_position)
@@ -726,7 +852,8 @@ async def move(ctx: lightbulb.Context) -> None:
     if not len(node.queue) >= 1:
         embed = hikari.Embed(title=f"**There is only 1 song in the queue.**",color=0xC80000)
         await ctx.respond(embed=embed)
-        return
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
     queue = node.queue
     song_to_be_moved = queue[old_index]
     try:
@@ -735,11 +862,14 @@ async def move(ctx: lightbulb.Context) -> None:
     except:
         embed = hikari.Embed(title=f"**Incorrect position entered.**",color=0xC80000)
         await ctx.respond(embed=embed)
-        return
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
     node.queue = queue
     await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
     embed = hikari.Embed(title=f"**Moved {song_to_be_moved.track.info.title} to position {new_index}.**", color=0x6100FF)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -751,11 +881,15 @@ async def empty(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return None
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     await plugin.d.lavalink.stop(ctx.guild_id)
@@ -767,6 +901,8 @@ async def empty(ctx: lightbulb.Context) -> None:
     await _join(ctx)
     embed=hikari.Embed(title="**Emptied the queue.**",color=0x6100FF)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
     
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -785,6 +921,8 @@ async def newreleases(ctx: lightbulb.Context) -> None:
     except:
         pass
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -804,6 +942,8 @@ async def trending(ctx: lightbulb.Context) -> None:
     except:
         pass
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
     
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -815,11 +955,15 @@ async def recommend(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
-        return None
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
+        return
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
+        await asyncio.sleep(60)
+        await ctx.delete_last_response()
         return
     url_data = urlparse.urlparse(f"{node.now_playing.track.info.uri}")
     query = urlparse.parse_qs(url_data.query)
@@ -827,6 +971,8 @@ async def recommend(ctx: lightbulb.Context) -> None:
     print(video)
     embed=hikari.Embed(title="**Recommendations**", description="Adding recommended tracks to the queue.", color=0x6100FF)
     await ctx.respond(embed=embed)
+    await asyncio.sleep(600)
+    await ctx.delete_last_response()
     ytmusic = YTMusic()
     playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=10)
     song1 = playlist["tracks"][1]["title"]
@@ -965,7 +1111,7 @@ if HIKARI_VOICE:
 
     @plugin.listener(hikari.VoiceStateUpdateEvent)
     async def voice_state_update(event: hikari.VoiceStateUpdateEvent) -> None:
-        plugin.d.lavalink.raw_handle_event_voice_state_update(
+        plugin.bot.d.lavalink.raw_handle_event_voice_state_update(
             event.state.guild_id,
             event.state.user_id,
             event.state.session_id,
@@ -974,7 +1120,7 @@ if HIKARI_VOICE:
 
     @plugin.listener(hikari.VoiceServerUpdateEvent)
     async def voice_server_update(event: hikari.VoiceServerUpdateEvent) -> None:
-        await plugin.d.lavalink.raw_handle_event_voice_server_update(event.guild_id, event.endpoint, event.token)
+        await plugin.bot.d.lavalink.raw_handle_event_voice_server_update(event.guild_id, event.endpoint, event.token)
 
 
 def load(bot: lightbulb.BotApp) -> None:
