@@ -31,7 +31,7 @@ LAVALINK_PASSWORD="nikomusic"
 
 class EventHandler:
 
-    async def track_start(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackStart) -> True:
+    async def track_start(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackStart) -> None:
         logging.info("Track started on guild: %s", event.guild_id)
 
     async def track_finish(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
@@ -1111,7 +1111,7 @@ if HIKARI_VOICE:
 
     @plugin.listener(hikari.VoiceStateUpdateEvent)
     async def voice_state_update(event: hikari.VoiceStateUpdateEvent) -> None:
-        plugin.bot.d.lavalink.raw_handle_event_voice_state_update(
+        plugin.d.lavalink.raw_handle_event_voice_state_update(
             event.state.guild_id,
             event.state.user_id,
             event.state.session_id,
@@ -1120,7 +1120,7 @@ if HIKARI_VOICE:
 
     @plugin.listener(hikari.VoiceServerUpdateEvent)
     async def voice_server_update(event: hikari.VoiceServerUpdateEvent) -> None:
-        await plugin.bot.d.lavalink.raw_handle_event_voice_server_update(event.guild_id, event.endpoint, event.token)
+        await plugin.d.lavalink.raw_handle_event_voice_server_update(event.guild_id, event.endpoint, event.token)
 
 
 def load(bot: lightbulb.BotApp) -> None:
