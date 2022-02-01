@@ -146,27 +146,19 @@ async def play(ctx: lightbulb.Context) -> None:
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
         await ctx.respond(embed=embed)
-        await asyncio.sleep(60)
-        await ctx.delete_last_response()
         return None
     if not query:
         embed = hikari.Embed(title="**Please enter a song to play.**", colour=0xC80000)
         await ctx.respond(embed=embed)
-        await asyncio.sleep(60)
-        await ctx.delete_last_response()
         return None
     await _join(ctx)
     if "youtube" in query:
         embed=hikari.Embed(title="**Supported Platforms : Soundcloud, Spotify, Bandcamp, Vimeo, Twitch and HTTP Streams.**", color=0xC80000)
         await ctx.respond(embed=embed)
-        await asyncio.sleep(60)
-        await ctx.delete_last_response()
         return
     if "youtu.be" in query:
         embed=hikari.Embed(title="**Supported Platforms : Soundcloud, Spotify, Bandcamp, Vimeo, Twitch and HTTP Streams.**", color=0xC80000)
         await ctx.respond(embed=embed)
-        await asyncio.sleep(60)
-        await ctx.delete_last_response()
         return
     if "https://open.spotify.com/playlist" in ctx.options.song:
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -185,8 +177,6 @@ async def play(ctx: lightbulb.Context) -> None:
           pass
         embed=hikari.Embed(title="**Added Playlist To The Queue.**", color=0x6100FF)
         await ctx.respond(embed=embed)
-        await asyncio.sleep(600)
-        await ctx.delete_last_response()
         return
     if "https://open.spotify.com/album" in ctx.options.song:	
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -204,8 +194,6 @@ async def play(ctx: lightbulb.Context) -> None:
           pass
         embed=hikari.Embed(title="**Added Album To The Queue.**", color=0x6100FF)
         await ctx.respond(embed=embed)
-        await asyncio.sleep(600)
-        await ctx.delete_last_response()
         return
     if "https://open.spotify.com/track" in ctx.options.song:
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -219,8 +207,6 @@ async def play(ctx: lightbulb.Context) -> None:
         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
         embed=hikari.Embed(title="Added Song To The Queue",color=0x6100FF) 
         await ctx.respond(embed=embed) 
-        await asyncio.sleep(600)
-        await ctx.delete_last_response()
         return
     if not re.match(URL_REGEX, query):
       sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
@@ -233,8 +219,6 @@ async def play(ctx: lightbulb.Context) -> None:
       except:
         embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
         await ctx.respond(embed=embed)
-        await asyncio.sleep(60)
-        await ctx.delete_last_response()
         return
       result = f"ytmsearch:{queryfinal}"
       query_information = await plugin.d.lavalink.get_tracks(result)
@@ -243,8 +227,6 @@ async def play(ctx: lightbulb.Context) -> None:
     if not query_information.tracks:
         embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
         await ctx.respond(embed=embed)
-        await asyncio.sleep(60)
-        await ctx.delete_last_response()
         return
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.now_playing:
@@ -280,8 +262,6 @@ async def play(ctx: lightbulb.Context) -> None:
      except:
         pass
      await ctx.respond(embed=embed1)
-     await asyncio.sleep(600)
-     await ctx.delete_last_response()
     else:
      sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
      results = sp.search(q=f'{query}', limit=1)
@@ -316,13 +296,11 @@ async def play(ctx: lightbulb.Context) -> None:
      except:
         pass
      await ctx.respond(embed=embed)
-     await asyncio.sleep(600)
-     await ctx.delete_last_response()
     try:
         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
     except lavasnek_rs.NoSessionPresent:
         pass
-
+    
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("stop", "Niko stops the currently playing song. (Type skip if you would like to move onto the next song.)", auto_defer=True)
