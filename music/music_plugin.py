@@ -14,6 +14,7 @@ import requests
 import json
 import os
 import dotenv
+import datetime
 from datetime import date
 
 dotenv.load_dotenv()
@@ -34,15 +35,15 @@ plugin = lightbulb.Plugin("Music", include_datastore = True)
 class EventHandler:
 
     async def track_start(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackStart) -> None:
-        embed=hikari.Embed(title="**Track Started**", description=f"Track started on guild: {event.guild_id}", color=0x6100FF)
+        embed=hikari.Embed(title="**Track Started**", description=f"Track started on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
         
     async def track_finish(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
-        embed=hikari.Embed(title="**Track Finished**", description=f"Track finished on guild: {event.guild_id}", color=0x6100FF)
+        embed=hikari.Embed(title="**Track Finished**", description=f"Track finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
 
     async def track_exception(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackException) -> None:
-        embed=hikari.Embed(title="**Issue**", description=f"There was an issue on guild: {event.guild_id}", color=0xC80000)
+        embed=hikari.Embed(title="**Issue**", description=f"There was an issue on guild: {event.guild_id}", color=0xC80000, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
 
         skip = await lavalink.skip(event.guild_id)
@@ -78,7 +79,7 @@ async def _join(ctx: lightbulb.Context) -> Optional[hikari.Snowflake]:
             connection_info = await plugin.d.lavalink.join(ctx.guild_id, channel_id)
         except TimeoutError:
             await ctx.respond("It seems that there's an issue. I might not have the right permissions.")
-            embed=hikari.Embed(title="**Timeout Error**", description=f"A timeout error just occured.", color=0xC80000)
+            embed=hikari.Embed(title="**Timeout error**", description=f"A timeout error just occured.", color=0xC80000, timestamp=datetime.datetime.now().astimezone())
             await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
             return None
 
@@ -171,7 +172,7 @@ async def play(ctx: lightbulb.Context) -> None:
           pass
         embed=hikari.Embed(title="**Added Playlist To The Queue.**", color=0x6100FF)
         await ctx.respond(embed=embed)
-        embed=hikari.Embed(title="**Playlist Added**", description=f"A Spotify playlist was just added to the queue.", color=0x6100FF)
+        embed=hikari.Embed(title="**Playlist Added**", description=f"Spotify playlist was just added to the queue.", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
         return
     if "https://open.spotify.com/album" in ctx.options.song:	
@@ -190,7 +191,7 @@ async def play(ctx: lightbulb.Context) -> None:
           pass
         embed=hikari.Embed(title="**Added Album To The Queue.**", color=0x6100FF)
         await ctx.respond(embed=embed)
-        embed=hikari.Embed(title="**Album Added**", description=f"A Spotify album was just added to the queue.", color=0x6100FF)
+        embed=hikari.Embed(title="**Album Added**", description=f"Spotify album was just added to the queue.", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
         return
     if "https://open.spotify.com/track" in ctx.options.song:
@@ -205,7 +206,7 @@ async def play(ctx: lightbulb.Context) -> None:
         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
         embed=hikari.Embed(title="Added Song To The Queue",color=0x6100FF) 
         await ctx.respond(embed=embed) 
-        embed=hikari.Embed(title="**Song Added**", description=f"A Spotify track was just added to the queue.", color=0x6100FF)
+        embed=hikari.Embed(title="**Song Added**", description=f"Spotify track was just added to the queue.", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
         return
     if not re.match(URL_REGEX, query):
@@ -219,7 +220,7 @@ async def play(ctx: lightbulb.Context) -> None:
       except:
         embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
         await ctx.respond(embed=embed)
-        embed=hikari.Embed(title="**Unable To Find Any Tracks**", description=f"Unable to find tracks for **{query}**", color=0x6100FF)
+        embed=hikari.Embed(title="**Unable To Find Any Tracks**", description=f"Unable to find tracks for **{query}**", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
         return
       result = f"ytmsearch:{queryfinal}"
@@ -229,7 +230,7 @@ async def play(ctx: lightbulb.Context) -> None:
     if not query_information.tracks:
         embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
         await ctx.respond(embed=embed)
-        embed=hikari.Embed(title="**Unable To Find Any Tracks**", description=f"Unable to find tracks for **{query}**", color=0x6100FF)
+        embed=hikari.Embed(title="**Unable To Find Any Tracks**", description=f"Unable to find tracks for **{query}**", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
         return
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -538,7 +539,7 @@ async def lyrics(ctx: lightbulb.Context) -> None:
      except:
       embed = hikari.Embed(title="**Unable to find any lyrics!**", colour=0xC80000)
       await ctx.respond(embed=embed)
-      embed=hikari.Embed(title="**Unable To find Lyrics**", description=f"Unable to find lyrics for **{ctx.options.song}**", color=0x6100FF)
+      embed=hikari.Embed(title="**Unable To find Lyrics**", description=f"Unable to find lyrics for **{ctx.options.song}**", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
       await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
      total = 1
      for i in range(len(test_stirng)):
