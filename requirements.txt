@@ -1,0 +1,9 @@
+hikari==2.0.0.dev105
+hikari-lightbulb==2.1.3
+lyricsgenius==3.0.1
+python-dotenv==0.19.2
+spotipy==2.19.0
+uvloop==0.16.0
+lavasnek-rs==0.1.0a3
+ytmusicapi==0.20.0
+lightbulb-ext-neon @ git+https://github.com/neonjonn/lightbulb-ext-neon.git@119eb9aa015488f47764316af16e7cf1eed72a15
