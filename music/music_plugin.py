@@ -365,7 +365,7 @@ async def volume(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("time", "What time you would like to seek to.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("time", "What time you would like to seek to. Example : 1:10", modifier=lightbulb.OptionModifier.CONSUME_REST)
 @lightbulb.command("seek", "Seek to a specific point in a song.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def seek(ctx: lightbulb.Context) -> None:
