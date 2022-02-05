@@ -425,9 +425,25 @@ async def replay(ctx: lightbulb.Context) -> None:
         await ctx.respond(embed=embed)
         return
     await plugin.d.lavalink.seek_millis(ctx.guild_id, 0000)
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+    results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
+    print(f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}")  
+    for idx, track in enumerate(results['tracks']['items']):
+        querytrack = track['name']
+        queryartist = track["artists"][0]["name"]	
     embed = hikari.Embed(title=f"**Replaying {node.now_playing.track.info.title}.**", colour=0x6100FF)
+    try:
+        embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
+    except:
+        pass
+    try:
+        length = divmod(node.now_playing.track.info.length, 60000)
+        position = divmod(node.now_playing.track.info.position, 60000)
+        embed.add_field(name="Duration Played", value=f"{int(position[0])}:{round(position[1]/1000):02}/{int(length[0])}:{round(length[1]/1000):02}")
+    except:
+        pass
     await ctx.respond(embed=embed)
-
+    
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("skip", "Niko skips to the next song (if any).", auto_defer=True)
@@ -526,7 +542,7 @@ async def resume(ctx: lightbulb.Context) -> None:
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("song", "The name of the song you want lyrics for.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("lyrics", "Niko searches for the lyrics of any song of your choice!", auto_defer=True)
+@lightbulb.command("lyrics", "Niko searches for the lyrics of any song of your choice!", auto_defer=True, ephemeral=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def lyrics(ctx: lightbulb.Context) -> None:
      genius = lyricsgenius.Genius(f"{GENIUS_API_KEY}")
