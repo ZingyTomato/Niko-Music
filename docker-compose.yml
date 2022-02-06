@@ -11,5 +11,5 @@ services:
     image: zingytomato/lavalink
     container_name: lavalink
     environment: 
-      - PASSWORD= "nikomusic" # Cannot be changed
+      - PASSWORD=nikomusic # Cannot be changed if using both images
     restart: unless-stopped
