@@ -8,6 +8,4 @@ RUN apt update -y && apt upgrade -y
 RUN apt install wget -y
 RUN wget https://github.com/freyacodes/Lavalink/releases/latest/download/lavalink.jar
 
-EXPOSE 2333
-
-CMD ["java", "-jar", "lavalink.jar"]
+ENTRYPOINT ["java", "-Djdk.tls.client.protocols=TLSv1.1,TLSv1.2", "-Xmx4G", "-jar", "Lavalink.jar"]
