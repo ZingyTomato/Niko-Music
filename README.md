@@ -14,7 +14,7 @@ Support Server : https://discord.gg/grSvEPYtDF
 
 ```
 ---
-version: "2.1 "
+version: "2.1"
 services:
   nikomusic:
     image: zingytomato/nikomusic
@@ -25,6 +25,8 @@ services:
   lavalink:
     image: zingytomato/lavalink
     container_name: lavalink
+    environment: 
+      - PASSWORD=nikomusic # Cannot be changed if using both images. For lavalink : https://github.com/ZingyTomato/Niko-Music/tree/main/lavalink
     restart: unless-stopped
 ```
 ## .env Example
