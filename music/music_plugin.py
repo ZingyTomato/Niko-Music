@@ -16,6 +16,8 @@ import os
 import dotenv
 import datetime
 from datetime import date
+import miru
+from miru.ext import nav
 
 dotenv.load_dotenv()
 
@@ -626,9 +628,10 @@ async def now_playing(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("queue", "Niko shows you the queue.", auto_defer=True)
+@lightbulb.command("queue", "Niko shows you the queue.")
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def queue(ctx: lightbulb.Context) -> None:
+    node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
     if not voice_state:
@@ -640,24 +643,33 @@ async def queue(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    embed = hikari.Embed(title="**The Queue**",description=f"Here are the next **{len(node.queue)}** tracks.",color=0x6100FF)
+    if len(node.queue) == 1:
+        embed = hikari.Embed(title="**The queue is currently empty.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return
+    songs = [f'{tq.track.info.title} - {tq.track.info.author} ({int(divmod(tq.track.info.length, 60000)[0])}:{round(divmod(tq.track.info.length, 60000)[1]/1000):02})' for i, tq in enumerate(node.queue[1:], start=1)]
+    chunks = [songs[i : i + 10] for i in range(0, len(songs), 10)]
+    embeds = []
+    i = 1
+    for chunk in chunks:
+        texts = []
+        for track in chunk:
+            texts.append(f"**{i}.** {track}")
+            i += 1
+        names = "\n".join(texts)
+        songs = hikari.Embed(title="**The Queue**", description=names, color=0x6100FF)
+        embeds.append(songs)
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
-    results = sp.search(q=f'{node.now_playing.track.info.author} {node.now_playing.track.info.title}', limit=1)
+    results = sp.search(q=f'{node.queue[1].track.info.author} {node.queue[1].track.info.title}', limit=1)
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
     try:
-        embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
+        songs.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
         pass
-    try:
-      embed.add_field(name="Currently playing", value=f"{[node.queue[0].track.info.title]}({track['external_urls']['spotify']})")
-    except:
-      embed.add_field(name="Currently playing", value=f"{node.queue[0].track.info.title}")  
-    i = 1
-    if len(node.queue) > 1:
-        embed.add_field(name="Upcoming", value=f"\n".join([f'**{i}.** {tq.track.info.title}' for i, tq in enumerate(node.queue[1:], start=1)]))
-    await ctx.respond(embed=embed)
+    navigator = nav.NavigatorView(pages=embeds)
+    await navigator.send(ctx.interaction)
     
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
