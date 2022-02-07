@@ -2,10 +2,12 @@ import os
 import hikari
 import lightbulb
 import dotenv
+import miru
 
 dotenv.load_dotenv()
 
 bot = lightbulb.BotApp(os.getenv("TOKEN"))
+miru.load(bot)
 
 @bot.listen()
 async def starting_load_extensions(_: hikari.StartingEvent) -> None:
