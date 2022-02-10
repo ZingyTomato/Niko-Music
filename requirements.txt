@@ -7,4 +7,3 @@ uvloop==0.16.0
 lavasnek-rs==0.1.0a3
 ytmusicapi==0.20.0
 hikari-miru==1.1.0
-lightbulb-ext-neon @ git+https://github.com/neonjonn/lightbulb-ext-neon.git@119eb9aa015488f47764316af16e7cf1eed72a15
