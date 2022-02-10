@@ -9,7 +9,6 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import re
 import lyricsgenius
 import urllib.parse as urlparse
-from lightbulb.ext import neon
 import requests
 import json
 import os
@@ -920,72 +919,41 @@ async def recommend(ctx: lightbulb.Context) -> None:
     except:
         pass
 
-class Menu(neon.ComponentMenu):
-    @neon.button("Support Server!", "https://discord.gg/grSvEPYtDF", hikari.ButtonStyle.LINK)
-    @neon.button("Visit my Project!", "https://github.com/ZingyTomato/Niko-Music", hikari.ButtonStyle.LINK)
-    @neon.button("Invite me!", "https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", hikari.ButtonStyle.LINK)
-    @neon.button("Vote for me!", "https://top.gg/bot/915595163286532167/vote", hikari.ButtonStyle.LINK)
-    @neon.button_group()
-    async def Invite(self, button: neon.Button) -> None:
-        await self.edit_msg(f"{button.emoji} - {button.custom_id}")
-        
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("invite", "Invite Niko to other servers!", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def invite(ctx: lightbulb.Context) -> None:
-    menu = Menu(ctx)
     embed=hikari.Embed(title="**A Few Related Links.**",color=0x6100FF)
-    msg = await ctx.respond(embed=embed, components=menu.build())
-    await menu.run(msg)
-
-class Menu2(neon.ComponentMenu):
-    @neon.button("Vote for me!", "https://top.gg/bot/915595163286532167/vote", hikari.ButtonStyle.LINK)
-    @neon.button_group()
-    async def Invite(self, button: neon.Button) -> None:
-        await self.edit_msg(f"{button.emoji} - {button.custom_id}")
+    view = miru.View()
+    view.add_item(miru.Button(url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", label="Invite me!"))
+    await ctx.respond(embed=embed, components=view.build())
         
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("vote", "Vote for Niko!", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def vote(ctx: lightbulb.Context) -> None:
-    menu = Menu2(ctx)
     embed=hikari.Embed(title="**Click the button below to vote for me.**",color=0x6100FF)
-    msg = await ctx.respond(embed=embed, components=menu.build())
-    await menu.run(msg)
-
-class Menu3(neon.ComponentMenu):
-    @neon.button("Join my support server!", "https://discord.gg/grSvEPYtDF", hikari.ButtonStyle.LINK)
-    @neon.button_group()
-    async def Invite(self, button: neon.Button) -> None:
-        await self.edit_msg(f"{button.emoji} - {button.custom_id}")
+    view = miru.View()
+    view.add_item(miru.Button(url="https://top.gg/bot/915595163286532167/vote", label="Vote for me!"))
+    await ctx.respond(embed=embed, components=view.build())
         
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("support", "Visit my support server!", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def vote(ctx: lightbulb.Context) -> None:
-    menu = Menu3(ctx)
     embed=hikari.Embed(title="**Click the button below to join my support server.**",color=0x6100FF)
-    msg = await ctx.respond(embed=embed, components=menu.build())
-    await menu.run(msg)
-
-class helpmenu(neon.ComponentMenu):
-    @neon.button("Support Server!", "https://discord.gg/grSvEPYtDF", hikari.ButtonStyle.LINK)
-    @neon.button("Visit my Project!", "https://github.com/ZingyTomato/Niko-Music", hikari.ButtonStyle.LINK)
-    @neon.button("Invite me!", "https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", hikari.ButtonStyle.LINK)
-    @neon.button("Vote for me!", "https://top.gg/bot/915595163286532167/vote", hikari.ButtonStyle.LINK)
-    @neon.button_group()
-    async def HelpButton(self, button: neon.Button) -> None:
-        await self.edit_msg(f"{button.emoji} - {button.custom_id}")
+    view = miru.View()
+    view.add_item(miru.Button(url="https://discord.gg/grSvEPYtDF", label="Support Server!"))
+    await ctx.respond(embed=embed, components=view.build())
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("help", "See a list of all my commands!", auto_defer=True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def help(ctx: lightbulb.Context) -> None:
-    menu = helpmenu(ctx)
     embed=hikari.Embed(title="**Help Center**",color=0x6100FF)
     embed.add_field(name="/join", value="Niko joins your VC.", inline=True)
     embed.add_field(name="/leave", value="Niko leaves your VC.", inline=True)
@@ -1008,8 +976,12 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/newreleases", value="See the latest releases for the day.", inline=True)
     embed.add_field(name="/trending", value="See the latest trending tracks for the day.", inline=True)
     embed.add_field(name="/invite", value="Invite niko to other servers.", inline=True)
-    msg = await ctx.respond(embed=embed, components=menu.build())
-    await menu.run(msg)
+    view = miru.View()
+    view.add_item(miru.Button(url="https://github.com/ZingyTomato/Niko-Music", label="Visit my project!"))
+    view.add_item(miru.Button(url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", label="Invite me!"))
+    view.add_item(miru.Button(url="https://top.gg/bot/915595163286532167/vote", label="Vote for me!"))
+    view.add_item(miru.Button(url="https://discord.gg/grSvEPYtDF", label="Support Server!"))
+    await ctx.respond(embed=embed, components=view.build())
 
 if HIKARI_VOICE:
 
