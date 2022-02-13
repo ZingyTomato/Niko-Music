@@ -36,12 +36,19 @@ plugin = lightbulb.Plugin("Music", include_datastore = True)
 class EventHandler:
 
     async def track_start(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackStart) -> None:
-        embed=hikari.Embed(title="**Track Started**", description=f"Track started on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
+        song = await plugin.d.lavalink.decode_track(event.track)
+        embed=hikari.Embed(title="**Track Started**", description=f"**{song.title} - {song.author}** started on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
         
-    async def track_finish(self, _: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
-        embed=hikari.Embed(title="**Track Finished**", description=f"Track finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
-        await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
+    async def track_finish(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
+     guild_node = await lavalink.get_guild_node(event.guild_id)
+     loop_enabled = guild_node.get_data().get("loop")
+     if loop_enabled:
+       song = await plugin.d.lavalink.decode_track(event.track)
+       result = await plugin.d.lavalink.get_tracks(song.uri)
+       await lavalink.play(event.guild_id, result.tracks[0]).queue()
+     embed=hikari.Embed(title="**Track Finished**", description=f"**{song.title} - {song.author}** finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
+     await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
 
     async def track_exception(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackException) -> None:
         embed=hikari.Embed(title="**Issue**", description=f"There was an issue on guild: {event.guild_id}", color=0xC80000, timestamp=datetime.datetime.now().astimezone())
@@ -134,7 +141,7 @@ async def leave(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("song", "The name of the song you want to play.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("song", "The name of the song (or url) that you want to play.", modifier=lightbulb.OptionModifier.CONSUME_REST)
 @lightbulb.command("play", "Niko searches for your song.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def play(ctx: lightbulb.Context) -> None:
@@ -919,6 +926,33 @@ async def recommend(ctx: lightbulb.Context) -> None:
     except:
         pass
 
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.command("loop", "Niko loops the currently playing song!", auto_defer=True)
+@lightbulb.implements(lightbulb.SlashCommand)
+async def loop(ctx: lightbulb.Context) -> None:
+    states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
+    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
+    if not voice_state:
+        embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return None
+    node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
+    if not node or not node.now_playing:
+        embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return
+    loop_enabled = node.get_data().get("loop")
+    if loop_enabled:
+        node.set_data({"loop": False})
+        embed = hikari.Embed(title="**Disabled the loop.**", color=0x6100FF)
+        await ctx.respond(embed=embed)
+    else:
+        node.set_data({"loop": True})
+        embed = hikari.Embed(title="**Enabled the loop.**", color=0x6100FF)
+        await ctx.respond(embed=embed)
+    
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("invite", "Invite Niko to other servers!", auto_defer=True)
