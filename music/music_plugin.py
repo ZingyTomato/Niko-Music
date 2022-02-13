@@ -47,7 +47,7 @@ class EventHandler:
        song = await plugin.d.lavalink.decode_track(event.track)
        result = await plugin.d.lavalink.get_tracks(song.uri)
        await lavalink.play(event.guild_id, result.tracks[0]).queue()
-     embed=hikari.Embed(title="**Track Finished**", description=f"**{song.title} - {song.author}** finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
+     embed=hikari.Embed(title="**Track Finished**", description=f"Track finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
      await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
 
     async def track_exception(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackException) -> None:
@@ -1006,6 +1006,7 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/empty", value="Niko empties the queue.", inline=True)
     embed.add_field(name="/skipto", value="Niko moves to a different song in the queue.", inline=True)
     embed.add_field(name="/move", value="Move tracks to different positions in the queue.", inline=True)
+    embed.add_field(name="/loop", value="Move loops the currently playing track.", inline=True)
     embed.add_field(name="/ping", value="See Niko's ping.", inline=True)
     embed.add_field(name="/newreleases", value="See the latest releases for the day.", inline=True)
     embed.add_field(name="/trending", value="See the latest trending tracks for the day.", inline=True)
