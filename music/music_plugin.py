@@ -17,6 +17,7 @@ import datetime
 from datetime import date
 import miru
 from miru.ext import nav
+import random
 
 dotenv.load_dotenv()
 
@@ -43,10 +44,21 @@ class EventHandler:
     async def track_finish(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
      guild_node = await lavalink.get_guild_node(event.guild_id)
      loop_enabled = guild_node.get_data().get("loop")
+     recommend_enabled = guild_node.get_data().get("recommend")
+     song = await plugin.d.lavalink.decode_track(event.track)
      if loop_enabled:
-       song = await plugin.d.lavalink.decode_track(event.track)
-       result = await plugin.d.lavalink.get_tracks(song.uri)
-       await lavalink.play(event.guild_id, result.tracks[0]).queue()
+        result = await plugin.d.lavalink.get_tracks(song.uri)
+        await lavalink.play(event.guild_id, result.tracks[0]).queue()
+     if recommend_enabled:
+        url_data = urlparse.urlparse(f"{song.uri}")
+        query = urlparse.parse_qs(url_data.query)
+        video = query["v"][0]
+        ytmusic = YTMusic()
+        playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=1)
+        song = playlist["tracks"][random.randrange(1,5)]["title"]
+        recommended_track = f"ytmsearch:{song}"
+        query_information = await lavalink.get_tracks(recommended_track)
+        await lavalink.play(event.guild_id, query_information.tracks[0]).queue()
      embed=hikari.Embed(title="**Track Finished**", description=f"Track finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
      await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
 
@@ -877,60 +889,21 @@ async def recommend(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
-    url_data = urlparse.urlparse(f"{node.now_playing.track.info.uri}")
-    query = urlparse.parse_qs(url_data.query)
-    video = query["v"][0]
-    print(video)
-    embed=hikari.Embed(title="**Recommendations**", description="Adding recommended tracks to the queue.", color=0x6100FF)
-    await ctx.respond(embed=embed)
-    ytmusic = YTMusic()
-    playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=10)
-    song1 = playlist["tracks"][1]["title"]
-    print(song1)
-    result = f"ytmsearch:{song1}"
-    try: 
-         query_information = await plugin.d.lavalink.get_tracks(result)
-         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
-    except:
-        pass
-    song2 = playlist["tracks"][2]["title"]
-    print(song2)
-    result2 = f"ytmsearch:{song2}"
-    try: 
-         query_information = await plugin.d.lavalink.get_tracks(result2)
-         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue() 
-    except:
-        pass
-    song3 = playlist["tracks"][3]["title"]
-    print(song3)
-    result3 = f"ytmsearch:{song3}"
-    try: 
-         query_information = await plugin.d.lavalink.get_tracks(result3)
-         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
-    except:
-        pass
-    song4 = playlist["tracks"][4]["title"]
-    print(song4)
-    result4 = f"ytmsearch:{song4}"
-    try: 
-         query_information = await plugin.d.lavalink.get_tracks(result4)
-         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
-    except:
-        pass
-    song5 = playlist["tracks"][5]["title"]
-    print(song5)
-    result3 = f"ytmsearch:{song5}"
-    try: 
-         query_information = await plugin.d.lavalink.get_tracks(result5)
-         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
-    except:
-        pass
+    recommend_enabled = node.get_data().get("recommend")
+    if recommend_enabled:
+        node.set_data({"recommend": False})
+        embed = hikari.Embed(title="**Disabled recommendations.**",color=0x6100FF)
+        await ctx.respond(embed=embed)
+    else:
+        node.set_data({"recommend": True})
+        embed = hikari.Embed(title="**Enabled recommendations.**", color=0x6100FF)
+        await ctx.respond(embed=embed)
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("loop", "Niko loops the currently playing song!", auto_defer=True)
+@lightbulb.command("queueloop", "Niko loops the entire queue!", auto_defer=True)
 @lightbulb.implements(lightbulb.SlashCommand)
-async def loop(ctx: lightbulb.Context) -> None:
+async def queueloop(ctx: lightbulb.Context) -> None:
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
@@ -946,11 +919,11 @@ async def loop(ctx: lightbulb.Context) -> None:
     loop_enabled = node.get_data().get("loop")
     if loop_enabled:
         node.set_data({"loop": False})
-        embed = hikari.Embed(title="**Disabled the loop.**", color=0x6100FF)
+        embed = hikari.Embed(title="**Disabled the queue loop.**", color=0x6100FF)
         await ctx.respond(embed=embed)
     else:
         node.set_data({"loop": True})
-        embed = hikari.Embed(title="**Enabled the loop.**", color=0x6100FF)
+        embed = hikari.Embed(title="**Enabled the queue loop.**", color=0x6100FF)
         await ctx.respond(embed=embed)
     
 @plugin.command()
@@ -1006,7 +979,7 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/empty", value="Niko empties the queue.", inline=True)
     embed.add_field(name="/skipto", value="Niko moves to a different song in the queue.", inline=True)
     embed.add_field(name="/move", value="Move tracks to different positions in the queue.", inline=True)
-    embed.add_field(name="/loop", value="Move loops the currently playing track.", inline=True)
+    embed.add_field(name="/queueloop", value="Niko loops the entire queue.", inline=True)
     embed.add_field(name="/ping", value="See Niko's ping.", inline=True)
     embed.add_field(name="/newreleases", value="See the latest releases for the day.", inline=True)
     embed.add_field(name="/trending", value="See the latest trending tracks for the day.", inline=True)
