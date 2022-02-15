@@ -55,7 +55,7 @@ class EventHandler:
         video = query["v"][0]
         ytmusic = YTMusic()
         playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=1)
-        song = playlist["tracks"][random.randrange(1,5)]["title"]
+        song = playlist["tracks"][random.randrange(1,10)]["title"]
         recommended_track = f"ytmsearch:{song}"
         query_information = await lavalink.get_tracks(recommended_track)
         await lavalink.play(event.guild_id, query_information.tracks[0]).queue()
@@ -892,11 +892,11 @@ async def recommend(ctx: lightbulb.Context) -> None:
     recommend_enabled = node.get_data().get("recommend")
     if recommend_enabled:
         node.set_data({"recommend": False})
-        embed = hikari.Embed(title="**Disabled recommendations.**",color=0x6100FF)
+        embed = hikari.Embed(title="**Disabled recommendations.**", description="Recommended tracks will no longer be queued.", color=0x6100FF)
         await ctx.respond(embed=embed)
     else:
         node.set_data({"recommend": True})
-        embed = hikari.Embed(title="**Enabled recommendations.**", color=0x6100FF)
+        embed = hikari.Embed(title="**Enabled recommendations.**", description=f"Recommended tracks will be queued after **{node.now_playing.track.info.title}** finishes.", color=0x6100FF)
         await ctx.respond(embed=embed)
 
 @plugin.command()
@@ -919,11 +919,11 @@ async def queueloop(ctx: lightbulb.Context) -> None:
     loop_enabled = node.get_data().get("loop")
     if loop_enabled:
         node.set_data({"loop": False})
-        embed = hikari.Embed(title="**Disabled the queue loop.**", color=0x6100FF)
+        embed = hikari.Embed(title="**Disabled the queue loop.**", description="No longer looping tracks in the queue.", color=0x6100FF)
         await ctx.respond(embed=embed)
     else:
         node.set_data({"loop": True})
-        embed = hikari.Embed(title="**Enabled the queue loop.**", color=0x6100FF)
+        embed = hikari.Embed(title="**Enabled the queue loop.**", description=f"Looping all **{len(node.queue)}** tracks in the queue.", color=0x6100FF)
         await ctx.respond(embed=embed)
     
 @plugin.command()
