@@ -15,7 +15,7 @@ tasks.load(bot)
 async def starting_load_extensions(_: hikari.StartingEvent) -> None:
     bot.load_extensions("music_plugin")
 
-@tasks.task(s=60)
+@tasks.task(s=60, auto_start=True)
 async def on_ready():
     guilds = await bot.rest.fetch_my_guilds()
     await bot.update_presence(status=hikari.Status.ONLINE, activity=hikari.Activity(type=hikari.ActivityType.PLAYING, name=f"/help in {len(guilds)} servers!"))
@@ -32,5 +32,4 @@ if os.name != "nt":
     import uvloop
     uvloop.install()
 
-on_ready.start()
 bot.run()
