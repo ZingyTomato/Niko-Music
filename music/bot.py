@@ -3,18 +3,20 @@ import hikari
 import lightbulb
 import dotenv
 import miru
+from lightbulb.ext import tasks
 
 dotenv.load_dotenv()
 
 bot = lightbulb.BotApp(os.getenv("TOKEN"))
 miru.load(bot)
+tasks.load(bot)
 
 @bot.listen()
 async def starting_load_extensions(_: hikari.StartingEvent) -> None:
     bot.load_extensions("music_plugin")
 
-@bot.listen()
-async def on_ready(_: hikari.StartedEvent):
+@tasks.task(s=60)
+async def on_ready():
     guilds = await bot.rest.fetch_my_guilds()
     await bot.update_presence(status=hikari.Status.ONLINE, activity=hikari.Activity(type=hikari.ActivityType.PLAYING, name=f"/help in {len(guilds)} servers!"))
 
@@ -30,4 +32,5 @@ if os.name != "nt":
     import uvloop
     uvloop.install()
 
+on_ready.start()
 bot.run()
