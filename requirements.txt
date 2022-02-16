@@ -4,6 +4,6 @@ lyricsgenius==3.0.1
 python-dotenv==0.19.2
 spotipy==2.19.0
 uvloop==0.16.0
-lavasnek-rs==0.1.0a3
+lavasnek-rs==0.1.0a4
 ytmusicapi==0.20.0
 hikari-miru==1.1.0
