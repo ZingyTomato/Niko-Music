@@ -996,6 +996,16 @@ async def vote(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.command("donate", "Help developing Niko by donating!", auto_defer=True)
+@lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
+async def donate(ctx: lightbulb.Context) -> None:
+    embed=hikari.Embed(title="**Let’s all come together and help fund Niko Music to keep it alive and perform EVEN better! Click the button below to donate! **",color=0x6100FF)
+    view = miru.View()
+    view.add_item(miru.Button(url="https://www.paypal.com/paypalme/NMdonations", label="Donate!"))
+    await ctx.respond(embed=embed, components=view.build())
+    
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("help", "See a list of all my commands!", auto_defer=True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def help(ctx: lightbulb.Context) -> None:
@@ -1023,6 +1033,7 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/trending", value="See the latest trending tracks for the day.", inline=True)
     embed.add_field(name="/invite", value="Invite niko to other servers.", inline=True)
     view = miru.View()
+    view.add_item(miru.Button(url="https://www.paypal.com/paypalme/NMdonations", label="Donate!"))
     view.add_item(miru.Button(url="https://github.com/ZingyTomato/Niko-Music", label="Visit my project!"))
     view.add_item(miru.Button(url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", label="Invite me!"))
     view.add_item(miru.Button(url="https://top.gg/bot/915595163286532167/vote", label="Vote for me!"))
