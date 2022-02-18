@@ -729,7 +729,7 @@ async def queue(ctx: lightbulb.Context) -> None:
     
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("index", "Index for the song you want to remove.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("index", "Index for the song you want to remove.", int, required = True)
 @lightbulb.command("remove", "Niko removes a song from the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def remove(ctx: lightbulb.Context) -> None:
@@ -767,7 +767,7 @@ async def remove(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("position", "The song's position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("position", "The song's position in the queue.", int, required = True)
 @lightbulb.command("skipto", "Niko goes to a different song in the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def skipto(ctx: lightbulb.Context) -> None:
@@ -809,8 +809,8 @@ async def skipto(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("current_position", "The song's current position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.option("new_position", "The song's new position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("current_position", "The song's current position in the queue.", int, required = True)
+@lightbulb.option("new_position", "The song's new position in the queue.", int, required = True)
 @lightbulb.command("move", "Move a song to a different position in the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def move(ctx: lightbulb.Context) -> None:
