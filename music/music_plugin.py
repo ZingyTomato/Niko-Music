@@ -1020,7 +1020,7 @@ async def shuffle(ctx: lightbulb.Context) -> None:
 
     await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
 
-    embed = hikari.Embed(title="Shuffled the Queue!", color=0x6100FF)
+    embed = hikari.Embed(title="**Shuffled the Queue!**", color=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
