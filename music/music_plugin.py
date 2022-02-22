@@ -1006,21 +1006,20 @@ async def donate(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.command("shuffle", "Shuffle the current queue!")
+@lightbulb.command("shuffle", "Niko shuffles the queue.")
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def shuffle(ctx: lightbulb.Context) -> None:
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
     if not len(node.queue) > 1:
-        return ctx.respond("Cannot shuffle, only one song in the queue!")
-    
+        embed = hikari.Embed(title="**There is only 1 song in the queue.**", color=0xC80000)
+        return await ctx.respond(embed=embed)
+
     queue = node.queue[1:] # Because Index 0 is currently playing song and we don't wanna shuffle that!
     random.shuffle(queue) # Randomly shuffling the queue!
     queue.insert(0, node.queue[0]) # Inserting the now playing song back into the queue
     node.queue = queue
-
     await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
-
-    embed = hikari.Embed(title="**Shuffled the Queue!**", color=0x6100FF)
+    embed = hikari.Embed(title="**Shuffled the Queue.**", color=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
