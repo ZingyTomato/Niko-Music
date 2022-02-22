@@ -1009,7 +1009,18 @@ async def donate(ctx: lightbulb.Context) -> None:
 @lightbulb.command("shuffle", "Niko shuffles the queue.")
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def shuffle(ctx: lightbulb.Context) -> None:
+    states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
+    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
     node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
+    if not voice_state:
+        embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return None
+    node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
+    if not node or not node.now_playing:
+        embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return
     if not len(node.queue) > 1:
         embed = hikari.Embed(title="**There is only 1 song in the queue.**", color=0xC80000)
         return await ctx.respond(embed=embed)
