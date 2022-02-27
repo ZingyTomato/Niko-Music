@@ -46,14 +46,13 @@ class EventHandler:
         users = [state async for state in states.iterator().filter(lambda i: i.user_id != BOT_ID)]
         loop_enabled = guild_node.get_data().get("loop")
         recommend_enabled = guild_node.get_data().get("recommend")
-        if not guild_node or not guild_node.now_playing or len(guild_node.queue) == 0 or not users:
+        if not guild_node or not guild_node.now_playing and not users:
             await plugin.d.lavalink.destroy(event.guild_id)
             await plugin.d.lavalink.leave(event.guild_id)
             await plugin.d.lavalink.remove_guild_node(event.guild_id)
             await plugin.d.lavalink.remove_guild_from_loops(event.guild_id)
             embed=hikari.Embed(title="**Track Finished**", description=f"Track finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
             return await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
-
         song = await plugin.d.lavalink.decode_track(event.track)
         if loop_enabled:
             result = await plugin.d.lavalink.get_tracks(song.uri)
@@ -1061,6 +1060,7 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/seek", value="Seek to a specific part time in a track.", inline=True)
     embed.add_field(name="/lyrics", value="Niko shows you the lyrics for most songs.", inline=True)
     embed.add_field(name="/empty", value="Niko empties the queue.", inline=True)
+    embed.add_field(name="/shuffle", value="Niko shuffles the queue.", inline=True)
     embed.add_field(name="/skipto", value="Niko moves to a different song in the queue.", inline=True)
     embed.add_field(name="/move", value="Move tracks to different positions in the queue.", inline=True)
     embed.add_field(name="/queueloop", value="Niko loops the entire queue.", inline=True)
