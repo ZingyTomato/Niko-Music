@@ -355,7 +355,7 @@ async def stop(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"**Stopped {node.now_playing.track.info.title}.**", colour=0x6100FF)
+    embed = hikari.Embed(title=f"**Stopped {node.now_playing.track.info.title}.**", description="Type **/skip** to play the next song.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -386,8 +386,31 @@ async def volume(ctx: lightbulb.Context) -> None:
         embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return
+    if ctx.options.percentage > 150:
+        embed = hikari.Embed(title="**Volume cannot be greater than 150%.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return
+    if ctx.options.percentage < 0:
+        embed = hikari.Embed(title="**Volume must be greater than 0%.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return
     await plugin.d.lavalink.volume(ctx.guild_id, ctx.options.percentage)
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+    results = sp.search(q=f"{node.now_playing.track.info.author} {node.now_playing.track.info.title}", limit=1)
+    for idx, track in enumerate(results['tracks']['items']):
+        querytrack = track['name']
+        queryartist = track["artists"][0]["name"]	
     embed=hikari.Embed(title=f"**Volume is now at {ctx.options.percentage}%**", color=0x6100FF)
+    try:
+        embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
+    except:
+        pass
+    try:
+        length = divmod(node.now_playing.track.info.length, 60000)
+        position = divmod(node.now_playing.track.info.position, 60000)
+        embed.add_field(name="Duration Played", value=f"{int(position[0])}:{round(position[1]/1000):02}/{int(length[0])}:{round(length[1]/1000):02}")
+    except:
+        pass
     await ctx.respond(embed=embed)
 
 @plugin.command()
@@ -491,7 +514,22 @@ async def skip(ctx: lightbulb.Context) -> None:
     else:
         if not node.queue and not node.now_playing:
             await plugin.d.lavalink.stop(ctx.guild_id)
-    embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", colour=0x6100FF)
+    try:
+      embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"Now Playing: **{node.queue[0].track.info.title} - {node.queue[0].track.info.author}**", colour=0x6100FF)
+    except:
+      embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"No songs left in the queue.", colour=0x6100FF)
+    try:
+      sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+      results = sp.search(q=f"{node.queue[0].track.info.author} {node.queue[0].track.info.title}", limit=1)
+      for idx, track in enumerate(results['tracks']['items']):
+        querytrack = track['name']
+        queryartist = track["artists"][0]["name"]	 
+    except:
+        pass   
+    try:
+        embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
+    except:
+        pass
     await ctx.respond(embed=embed)
 
 @plugin.command()
@@ -517,7 +555,7 @@ async def pause(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"**Paused {node.now_playing.track.info.title}.**", colour=0x6100FF)
+    embed = hikari.Embed(title=f"**Paused {node.now_playing.track.info.title}.**", description="Type **/resume** to resume the song.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -553,7 +591,7 @@ async def resume(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"**Resumed {node.now_playing.track.info.title}.**", colour=0x6100FF)
+    embed = hikari.Embed(title=f"**Resumed {node.now_playing.track.info.title}.**", description="Type **/pause** the pause the song.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -698,7 +736,7 @@ async def queue(ctx: lightbulb.Context) -> None:
     
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("index", "Index for the song you want to remove.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("index", "Index for the song you want to remove.", int, required = True)
 @lightbulb.command("remove", "Niko removes a song from the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def remove(ctx: lightbulb.Context) -> None:
@@ -736,7 +774,7 @@ async def remove(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("position", "The song's position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("position", "The song's position in the queue.", int, required = True)
 @lightbulb.command("skipto", "Niko goes to a different song in the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def skipto(ctx: lightbulb.Context) -> None:
@@ -778,8 +816,8 @@ async def skipto(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
-@lightbulb.option("current_position", "The song's current position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.option("new_position", "The song's new position in the queue.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.option("current_position", "The song's current position in the queue.", int, required = True)
+@lightbulb.option("new_position", "The song's new position in the queue.", int, required = True)
 @lightbulb.command("move", "Move a song to a different position in the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def move(ctx: lightbulb.Context) -> None:
@@ -965,6 +1003,45 @@ async def vote(ctx: lightbulb.Context) -> None:
 
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.command("donate", "Help developing Niko by donating!", auto_defer=True)
+@lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
+async def donate(ctx: lightbulb.Context) -> None:
+    embed=hikari.Embed(title="**Let’s all come together and help fund Niko Music to keep it alive and perform EVEN better! Click the button below to donate! **",color=0x6100FF)
+    view = miru.View()
+    view.add_item(miru.Button(url="https://www.paypal.com/paypalme/NMdonations", label="Donate!"))
+    await ctx.respond(embed=embed, components=view.build())
+
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.command("shuffle", "Niko shuffles the queue.", auto_defer=True)
+@lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
+async def shuffle(ctx: lightbulb.Context) -> None:
+    states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
+    voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
+    node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
+    if not voice_state:
+        embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return None
+    node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
+    if not node or not node.now_playing:
+        embed = hikari.Embed(title="**There are no songs playing at the moment.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        return
+    if not len(node.queue) > 1:
+        embed = hikari.Embed(title="**There is only 1 song in the queue.**", color=0xC80000)
+        return await ctx.respond(embed=embed)
+
+    queue = node.queue[1:] # Because Index 0 is currently playing song and we don't wanna shuffle that!
+    random.shuffle(queue) # Randomly shuffling the queue!
+    queue.insert(0, node.queue[0]) # Inserting the now playing song back into the queue
+    node.queue = queue
+    await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
+    embed = hikari.Embed(title="**Shuffled the Queue.**", color=0x6100FF)
+    await ctx.respond(embed=embed)
+
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.command("help", "See a list of all my commands!", auto_defer=True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def help(ctx: lightbulb.Context) -> None:
@@ -992,6 +1069,7 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/trending", value="See the latest trending tracks for the day.", inline=True)
     embed.add_field(name="/invite", value="Invite niko to other servers.", inline=True)
     view = miru.View()
+    view.add_item(miru.Button(url="https://www.paypal.com/paypalme/NMdonations", label="Donate!"))
     view.add_item(miru.Button(url="https://github.com/ZingyTomato/Niko-Music", label="Visit my project!"))
     view.add_item(miru.Button(url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", label="Invite me!"))
     view.add_item(miru.Button(url="https://top.gg/bot/915595163286532167/vote", label="Vote for me!"))

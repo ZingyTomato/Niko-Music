@@ -24,7 +24,7 @@ async def on_ready():
 @lightbulb.command("ping", "See Niko's latency.", auto_defer=True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def ping(ctx: lightbulb.Context) -> None:
-    embed=hikari.Embed(title=f"My ping is {bot.heartbeat_latency * 1_000:.0f} ms.", color=0x6100FF)
+    embed=hikari.Embed(title=f"**My ping is {bot.heartbeat_latency * 1_000:.0f} ms.**", color=0x6100FF)
     await ctx.respond(embed=embed)
 
 
