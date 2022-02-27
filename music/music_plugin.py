@@ -9,8 +9,6 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import re
 import lyricsgenius
 import urllib.parse as urlparse
-import requests
-import json
 import os
 import dotenv
 import datetime
@@ -42,25 +40,34 @@ class EventHandler:
         await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
         
     async def track_finish(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
-     guild_node = await lavalink.get_guild_node(event.guild_id)
-     loop_enabled = guild_node.get_data().get("loop")
-     recommend_enabled = guild_node.get_data().get("recommend")
-     song = await plugin.d.lavalink.decode_track(event.track)
-     if loop_enabled:
-        result = await plugin.d.lavalink.get_tracks(song.uri)
-        await lavalink.play(event.guild_id, result.tracks[0]).queue()
-     if recommend_enabled:
-        url_data = urlparse.urlparse(f"{song.uri}")
-        query = urlparse.parse_qs(url_data.query)
-        video = query["v"][0]
-        ytmusic = YTMusic()
-        playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=1)
-        song = playlist["tracks"][random.randrange(1,10)]["title"]
-        recommended_track = f"ytmsearch:{song}"
-        query_information = await lavalink.get_tracks(recommended_track)
-        await lavalink.play(event.guild_id, query_information.tracks[0]).queue()
-     embed=hikari.Embed(title="**Track Finished**", description=f"Track finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
-     await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
+        BOT_ID = plugin.bot.application.id
+        guild_node = await lavalink.get_guild_node(event.guild_id)
+        states = plugin.bot.cache.get_voice_states_view_for_guild(event.guild_id)
+        users = [state async for state in states.iterator().filter(lambda i: i.user_id != BOT_ID)]
+        loop_enabled = guild_node.get_data().get("loop")
+        recommend_enabled = guild_node.get_data().get("recommend")
+        if not guild_node or not guild_node.now_playing or len(guild_node.queue) == 0 or not users:
+            await plugin.d.lavalink.destroy(event.guild_id)
+            await plugin.d.lavalink.leave(event.guild_id)
+            await plugin.d.lavalink.remove_guild_node(event.guild_id)
+            await plugin.d.lavalink.remove_guild_from_loops(event.guild_id)
+            embed=hikari.Embed(title="**Track Finished**", description=f"Track finished on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
+            return await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
+
+        song = await plugin.d.lavalink.decode_track(event.track)
+        if loop_enabled:
+            result = await plugin.d.lavalink.get_tracks(song.uri)
+            await lavalink.play(event.guild_id, result.tracks[0]).queue()
+        if recommend_enabled:
+            url_data = urlparse.urlparse(f"{song.uri}")
+            query = urlparse.parse_qs(url_data.query)
+            video = query["v"][0]
+            ytmusic = YTMusic()
+            playlist = ytmusic.get_watch_playlist(videoId=f"{video}", limit=1)
+            song = playlist["tracks"][random.randrange(1,10)]["title"]
+            recommended_track = f"ytmsearch:{song}"
+            query_information = await lavalink.get_tracks(recommended_track)
+            await lavalink.play(event.guild_id, query_information.tracks[0]).queue()
 
     async def track_exception(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackException) -> None:
         embed=hikari.Embed(title="**Issue**", description=f"There was an issue on guild: {event.guild_id}", color=0xC80000, timestamp=datetime.datetime.now().astimezone())
