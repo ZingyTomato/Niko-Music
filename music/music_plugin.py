@@ -160,7 +160,7 @@ async def leave(ctx: lightbulb.Context) -> None:
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
 @lightbulb.option("song", "The name of the song (or url) that you want to play.", modifier=lightbulb.OptionModifier.CONSUME_REST)
-@lightbulb.command("play", "Niko searches for your song.", auto_defer=True)
+@lightbulb.command("play", "Niko plays your desired song.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def play(ctx: lightbulb.Context) -> None:
     query = ctx.options.song
@@ -168,10 +168,6 @@ async def play(ctx: lightbulb.Context) -> None:
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
     if not voice_state:
         embed = hikari.Embed(title="**You are not in a voice channel.**", colour=0xC80000)
-        await ctx.respond(embed=embed)
-        return None
-    if not query:
-        embed = hikari.Embed(title="**Please enter a song to play.**", colour=0xC80000)
         await ctx.respond(embed=embed)
         return None
     await _join(ctx)
@@ -331,6 +327,37 @@ async def play(ctx: lightbulb.Context) -> None:
         await plugin.d.lavalink.play(ctx.guild_id, query_information.tracks[0]).requester(ctx.author.id).queue()
     except lavasnek_rs.NoSessionPresent:
         pass
+
+@plugin.command()
+@lightbulb.add_checks(lightbulb.guild_only)
+@lightbulb.option("song", "The name of the song that you want to search.", modifier=lightbulb.OptionModifier.CONSUME_REST)
+@lightbulb.command("search", "Niko searches for your a song based on your query.", auto_defer=True)
+@lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
+async def search(ctx: lightbulb.Context) -> None:
+    query = ctx.options.song
+    if not re.match(URL_REGEX, query):
+      sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+      results = sp.search(q=f'{query}', limit=10)
+      embed = hikari.Embed(title=f"**Results for {query}**", colour=0x6100FF)
+      embed.add_field(name="Top 10", value=f"\n".join([f"**{i}.** {track['name']} - {track['artists'][0]['name']}" for i, track in enumerate(results['tracks']['items'], start=1)]))
+      results1 = sp.search(q=f'{query}', limit=1)
+      for idx, track in enumerate(results1['tracks']['items']):
+        querytrack = track['name']
+      try:
+        embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
+      except:
+        pass
+      try:
+        await ctx.respond(embed=embed)
+      except:
+        embed = hikari.Embed(title="**Unable to find any songs! Please try to include the song's artists name as well.**", colour=0xC80000)
+        await ctx.respond(embed=embed)
+        embed=hikari.Embed(title="**Unable To Find Any Tracks**", description=f"Unable to find tracks for **{query}**", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
+        await plugin.bot.rest.create_message(LOGGING_SERVER, embed=embed)
+        return    
+    else:
+        embed=hikari.Embed(title="**URL'S are not supported!**", colour=0xC80000)
+        await ctx.respond(embed=embed)
     
 @plugin.command()
 @lightbulb.add_checks(lightbulb.guild_only)
@@ -1063,6 +1090,7 @@ async def help(ctx: lightbulb.Context) -> None:
     embed.add_field(name="/shuffle", value="Niko shuffles the queue.", inline=True)
     embed.add_field(name="/skipto", value="Niko moves to a different song in the queue.", inline=True)
     embed.add_field(name="/move", value="Move tracks to different positions in the queue.", inline=True)
+    embed.add_field(name="/search", value="Move searches for a track based on your query.", inline=True)
     embed.add_field(name="/queueloop", value="Niko loops the entire queue.", inline=True)
     embed.add_field(name="/ping", value="See Niko's ping.", inline=True)
     embed.add_field(name="/newreleases", value="See the latest releases for the day.", inline=True)
