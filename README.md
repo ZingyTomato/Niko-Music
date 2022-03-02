@@ -35,5 +35,5 @@ services:
 - SPOTCLIENTID= Spotify Client ID from https://developer.spotify.com/dashboard/applications
 - SPOTCLIENTSECRET= Spotify Client SECRET from https://developer.spotify.com/dashboard/applications
 - GENAPIKEY= Genius Client ID from https://genius.com/api-clients
-- LOGGING_SERVER_ID= ID of the discord channel that you want to send logs to
+- LOGGING_CHANNEL= ID of the discord channel that you want to send logs to
 ```
