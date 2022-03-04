@@ -542,10 +542,13 @@ async def skip(ctx: lightbulb.Context) -> None:
     else:
         if not node.queue and not node.now_playing:
             await plugin.d.lavalink.stop(ctx.guild_id)
-    try:
-      embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"Now Playing: **{node.queue[0].track.info.title} - {node.queue[0].track.info.author}**", colour=0x6100FF)
-    except:
-      embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"No songs left in the queue.", colour=0x6100FF)
+    recommend_enabled = node.get_data().get("recommend")
+    if recommend_enabled:
+        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"Recommendations have been enabled. Autoplaying the next track.", colour=0x6100FF)
+    elif (len(node.queue) == 0):
+        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"No songs left in the queue.", colour=0x6100FF)
+    else:
+        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"Now Playing: **{node.queue[0].track.info.title} - {node.queue[0].track.info.author}**", colour=0x6100FF)
     try:
       sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
       results = sp.search(q=f"{node.queue[0].track.info.author} {node.queue[0].track.info.title}", limit=1)
