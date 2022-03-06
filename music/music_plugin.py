@@ -580,14 +580,18 @@ async def skip(ctx: lightbulb.Context) -> None:
         if not node.queue and not node.now_playing:
             await plugin.d.lavalink.stop(ctx.guild_id)
     recommend_enabled = node.get_data().get("recommend")
+    loop_enabled = node.get_data().get("loop")
     if recommend_enabled:
-        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"Recommendations have been enabled. Autoplaying the next track.", colour=0x6100FF)
+        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title} - {skip.track.info.author}.**", description=f"Recommendations have been enabled. Autoplaying the next track.", colour=0x6100FF)
+        await ctx.respond(embed=embed)
+    elif loop_enabled:
+        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title} - {skip.track.info.author}.**", description=f"Queueloop has been enabled. Playing the next track.", colour=0x6100FF)
         await ctx.respond(embed=embed)
     elif (len(node.queue) == 0):
-        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", description=f"No songs left in the queue.", colour=0x6100FF)
+        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title} - {skip.track.info.author}.**", description=f"No songs left in the queue.", colour=0x6100FF)
         await ctx.respond(embed=embed)
     else:
-        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title}.**", colour=0x6100FF)
+        embed = hikari.Embed(title=f"**Skipped {skip.track.info.title} - {skip.track.info.author}.**", colour=0x6100FF)
         await ctx.respond(embed=embed)
 
 @plugin.command()
