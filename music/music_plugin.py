@@ -381,7 +381,7 @@ async def search(ctx: lightbulb.Context) -> None:
       sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
       results = sp.search(q=f'{query}', limit=10)
       embed = hikari.Embed(title=f"**Results for {query}**", colour=0x6100FF)
-      embed.add_field(name="Top 10 Results", value=f"\n".join([f"**{i}.** {track['name']} - {track['artists'][0]['name']}" for i, track in enumerate(results['tracks']['items'], start=1)]))
+      embed.add_field(name="Top 10 Results", value=f"\n".join([f"**{i}.** {[track['name']]}({track['external_urls']['spotify']}) - {track['artists'][0]['name']}" for i, track in enumerate(results['tracks']['items'], start=1)]))
       results1 = sp.search(q=f'{query}', limit=1)
       for idx, track in enumerate(results1['tracks']['items']):
         querytrack = track['name']
