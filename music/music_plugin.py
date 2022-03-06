@@ -41,15 +41,29 @@ class EventHandler:
         chanid = guild_node.get_data().get("ChannelID")
         firsttrack = guild_node.get_data().get("First")
         recommend_enabled = guild_node.get_data().get("recommend")
+        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
+        results = sp.search(q=f"{song.author} {song.title}", limit=1)
+        for idx, track in enumerate(results['tracks']['items']):
+           querytrack = track['name']
         if firsttrack == False:
           if recommend_enabled:
-            embed=hikari.Embed(title="**Recommended Next Track**", description=f"Recommended Track: **{song.title}** - **{song.author}**.", color=0x6100FF)
+            try:
+              embed=hikari.Embed(title="**Recommended Next Track**", description=f"{[song.title]}({track['external_urls']['spotify']})", color=0x6100FF)
+            except:
+              embed=hikari.Embed(title="**Recommended Next Track**", description=f"**{song.title}** - **{song.author}**", color=0x6100FF)
           else:
-            embed=hikari.Embed(title="**Playing Next Track**", description=f"Now Playing: **{song.title}** - **{song.author}**.", color=0x6100FF)
-          sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
-          results = sp.search(q=f"{song.author} {song.title}", limit=1)
-          for idx, track in enumerate(results['tracks']['items']):
-           querytrack = track['name']
+            try:
+              embed=hikari.Embed(title="**Playing Next Track**", description=f"{[song.title]}({track['external_urls']['spotify']})", color=0x6100FF)
+            except:
+              embed=hikari.Embed(title="**Playing Next Track**", description=f"**{song.title}** - **{song.author}**", color=0x6100FF)
+          try:
+             embed.add_field(name="Artist", value=f"{[song.author]}({track['artists'][0]['external_urls']['spotify']})", inline=False)
+          except:
+             embed.add_field(name="Artist", value=f"{song.author}", inline=False)
+          try:
+             embed.add_field(name="Album", value=f"{[track['album']['name']]}({track['album']['external_urls']['spotify']})", inline=False)
+          except:
+             pass
           try:
             embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
           except:
