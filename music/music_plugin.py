@@ -41,6 +41,9 @@ class EventHandler:
         chanid = guild_node.get_data().get("ChannelID")
         firsttrack = guild_node.get_data().get("First")
         recommend_enabled = guild_node.get_data().get("recommend")
+        loop_enabled = guild_node.get_data().get("loop")
+        embed=hikari.Embed(title="**Track Started**", description=f"**{song.title} - {song.author}** started on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
+        await plugin.bot.rest.create_message(LOGGING_CHANNEL, embed=embed)
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTCLIENT_ID,client_secret=SPOTCLIENT_SECRET))
         results = sp.search(q=f"{song.author} {song.title}", limit=1)
         for idx, track in enumerate(results['tracks']['items']):
@@ -48,14 +51,19 @@ class EventHandler:
         if firsttrack == False:
           if recommend_enabled:
             try:
-              embed=hikari.Embed(title="**Recommended Next Track**", description=f"{[song.title]}({track['external_urls']['spotify']})", color=0x6100FF)
+              embed=hikari.Embed(title="**Recommended the next track.**", description=f"{[song.title]}({track['external_urls']['spotify']})", color=0x6100FF)
             except:
-              embed=hikari.Embed(title="**Recommended Next Track**", description=f"**{song.title}** - **{song.author}**", color=0x6100FF)
+              embed=hikari.Embed(title="**Recommended the next track.**", description=f"**{song.title}** - **{song.author}**", color=0x6100FF)
+          elif loop_enabled: 
+            try:
+              embed=hikari.Embed(title="**Playing the next track in the queueloop.**", description=f"{[song.title]}({track['external_urls']['spotify']})", color=0x6100FF)
+            except:
+              embed=hikari.Embed(title="**Playing the next track in the queueloop.**", description=f"**{song.title}** - **{song.author}**", color=0x6100FF)
           else:
             try:
-              embed=hikari.Embed(title="**Playing Next Track**", description=f"{[song.title]}({track['external_urls']['spotify']})", color=0x6100FF)
+              embed=hikari.Embed(title="**Playing the next track.**", description=f"{[song.title]}({track['external_urls']['spotify']})", color=0x6100FF)
             except:
-              embed=hikari.Embed(title="**Playing Next Track**", description=f"**{song.title}** - **{song.author}**", color=0x6100FF)
+              embed=hikari.Embed(title="**Playing the next track.**", description=f"**{song.title}** - **{song.author}**", color=0x6100FF)
           try:
              embed.add_field(name="Artist", value=f"{[song.author]}({track['artists'][0]['external_urls']['spotify']})", inline=False)
           except:
@@ -68,10 +76,9 @@ class EventHandler:
             embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
           except:
             pass
-          await plugin.bot.rest.create_message(chanid, embed=embed)
-        embed=hikari.Embed(title="**Track Started**", description=f"**{song.title} - {song.author}** started on guild: {event.guild_id}", color=0x6100FF, timestamp=datetime.datetime.now().astimezone())
-        await plugin.bot.rest.create_message(LOGGING_CHANNEL, embed=embed)
-        return
+          resp = await plugin.bot.rest.create_message(chanid, embed=embed)
+          await asyncio.sleep(30)
+          await resp.delete()
         
     async def track_finish(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
         BOT_ID = plugin.bot.application.id
