@@ -16,6 +16,7 @@ from datetime import date
 import miru
 from miru.ext import nav
 import random
+import asyncio
 
 dotenv.load_dotenv()
 
