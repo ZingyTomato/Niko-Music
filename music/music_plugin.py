@@ -430,7 +430,7 @@ async def stop(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"**Stopped {node.now_playing.track.info.title}.**", description="Type **/skip** to play the next song.", colour=0x6100FF)
+    embed = hikari.Embed(title=f"**Stopped {node.now_playing.track.info.title} - {node.now_playing.track.info.title}.**", description="Type **/skip** to play the next song.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -519,7 +519,7 @@ async def seek(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"**Seeked {node.now_playing.track.info.title}.**", colour=0x6100FF)
+    embed = hikari.Embed(title=f"**Seeked {node.now_playing.track.info.title} - {node.now_playing.track.info.author}.**", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -554,7 +554,7 @@ async def replay(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"**Replaying {node.now_playing.track.info.title}.**", colour=0x6100FF)
+    embed = hikari.Embed(title=f"**Replaying {node.now_playing.track.info.title} - {node.now_playing.track.info.author}.**", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -624,7 +624,7 @@ async def pause(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"**Paused {node.now_playing.track.info.title}.**", description="Type **/resume** to resume the song.", colour=0x6100FF)
+    embed = hikari.Embed(title=f"**Paused {node.now_playing.track.info.title} - {node.now_playing.track.info.author}.**", description="Type **/resume** to resume the song.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -659,7 +659,7 @@ async def resume(ctx: lightbulb.Context) -> None:
     for idx, track in enumerate(results['tracks']['items']):
         querytrack = track['name']
         queryartist = track["artists"][0]["name"]	
-    embed = hikari.Embed(title=f"**Resumed {node.now_playing.track.info.title}.**", description="Type **/pause** the pause the song.", colour=0x6100FF)
+    embed = hikari.Embed(title=f"**Resumed {node.now_playing.track.info.title} - {node.now_playing.track.info.author}.**", description="Type **/pause** the pause the song.", colour=0x6100FF)
     try:
         embed.set_thumbnail(f"{track['album']['images'][0]['url']}")
     except:
@@ -836,7 +836,7 @@ async def remove(ctx: lightbulb.Context) -> None:
         pass
     node.queue = queue
     await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
-    embed = hikari.Embed(title=f"**Removed {song_to_be_removed.track.info.title}.**",color=0x6100FF,)
+    embed = hikari.Embed(title=f"**Removed {song_to_be_removed.track.info.title} - {song_to_be_removed.track.info.author}.**",color=0x6100FF,)
     await ctx.respond(embed=embed)
 
 @plugin.command()
@@ -878,7 +878,7 @@ async def skipto(ctx: lightbulb.Context) -> None:
     node.queue = queue
     await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
     await plugin.d.lavalink.skip(ctx.guild_id)
-    embed = hikari.Embed(title=f"**Skipped to {song_to_be_skipped.track.info.title}.**",color=0x6100FF)
+    embed = hikari.Embed(title=f"**Skipped to {song_to_be_skipped.track.info.title} - {song_to_be_skipped.track.info.author}.**",color=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
@@ -918,7 +918,7 @@ async def move(ctx: lightbulb.Context) -> None:
         return
     node.queue = queue
     await plugin.d.lavalink.set_guild_node(ctx.guild_id, node)
-    embed = hikari.Embed(title=f"**Moved {song_to_be_moved.track.info.title} to position {new_index}.**", color=0x6100FF)
+    embed = hikari.Embed(title=f"**Moved {song_to_be_moved.track.info.title} - {song_to_be_moved.track.info.author} to position {new_index}.**", color=0x6100FF)
     await ctx.respond(embed=embed)
 
 @plugin.command()
