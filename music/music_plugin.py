@@ -84,6 +84,7 @@ class EventHandler:
     async def track_finish(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackFinish) -> None:
         BOT_ID = plugin.bot.application.id
         guild_node = await lavalink.get_guild_node(event.guild_id)
+        chanid = guild_node.get_data().get("ChannelID")
         states = plugin.bot.cache.get_voice_states_view_for_guild(event.guild_id)
         users = [state async for state in states.iterator().filter(lambda i: i.user_id != BOT_ID)]
         loop_enabled = guild_node.get_data().get("loop")
@@ -99,11 +100,21 @@ class EventHandler:
         song = await plugin.d.lavalink.decode_track(event.track)
         if loop_enabled:
             track = f"{song.author}" + " " + f"{song.title}"
-            result = f"ytmsearch:{track}"
-            results = await plugin.d.lavalink.get_tracks(result)
-            await lavalink.play(event.guild_id, results.tracks[0]).queue()
+            try:
+              result = f"ytmsearch:{track}"
+              results = await plugin.d.lavalink.get_tracks(result)
+              await lavalink.play(event.guild_id, results.tracks[0]).queue()
+            except:
+              embed = hikari.Embed(title="**Unable to loop the track.**", color=0xC80000,)
+              await plugin.bot.rest.create_message(chanid, embed=embed)
+              return
         if recommend_enabled:
-            url_data = urlparse.urlparse(f"{song.uri}")
+            try:
+              url_data = urlparse.urlparse(f"{song.uri}")
+            except:
+              embed = hikari.Embed(title="**Unable to find any related tracks.**", color=0xC80000,)
+              await plugin.bot.rest.create_message(chanid, embed=embed)
+              return
             query = urlparse.parse_qs(url_data.query)
             video = query["v"][0]
             ytmusic = YTMusic()
@@ -112,7 +123,6 @@ class EventHandler:
             recommended_track = f"ytmsearch:{song}"
             query_information = await lavalink.get_tracks(recommended_track)
             await lavalink.play(event.guild_id, query_information.tracks[0]).queue()
-
     async def track_exception(self, lavalink: lavasnek_rs.Lavalink, event: lavasnek_rs.TrackException) -> None:
         embed=hikari.Embed(title="**Issue**", description=f"There was an issue on guild: {event.guild_id}", color=0xC80000, timestamp=datetime.datetime.now().astimezone())
         await plugin.bot.rest.create_message(LOGGING_CHANNEL, embed=embed)
@@ -926,6 +936,10 @@ async def move(ctx: lightbulb.Context) -> None:
 @lightbulb.command("empty", "Niko empties the queue.", auto_defer=True)
 @lightbulb.implements(lightbulb.PrefixCommand, lightbulb.SlashCommand)
 async def empty(ctx: lightbulb.Context) -> None:
+    node = await plugin.d.lavalink.get_guild_node(ctx.guild_id)
+    firsttrack = node.get_data().get("First")
+    recommend_enabled = node.get_data().get("recommend")
+    loop_enabled = node.get_data().get("loop")
     states = plugin.bot.cache.get_voice_states_view_for_guild(ctx.guild_id)
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == ctx.author.id)]
     if not voice_state:
@@ -945,6 +959,8 @@ async def empty(ctx: lightbulb.Context) -> None:
     await plugin.bot.update_voice_state(ctx.guild_id, None)
     await plugin.d.lavalink.wait_for_connection_info_remove(ctx.guild_id)
     await _join(ctx)
+    ID = ctx.channel_id
+    node.set_data({"ChannelID": ID, "First": False, "recommend": False})
     embed=hikari.Embed(title="**Emptied the queue.**",color=0x6100FF)
     await ctx.respond(embed=embed)
     
