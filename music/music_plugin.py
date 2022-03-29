@@ -1065,7 +1065,7 @@ async def queueloop(ctx: lightbulb.Context) -> None:
 async def invite(ctx: lightbulb.Context) -> None:
     embed=hikari.Embed(title="**A Few Related Links.**",color=0x6100FF)
     view = miru.View()
-    view.add_item(miru.Button(url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", label="Invite me!"))
+    view.add_item(miru.Button(url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2163239168&scope=bot%20applications.commands", label="Invite me!"))
     await ctx.respond(embed=embed, components=view.build())
         
 @plugin.command()
@@ -1138,7 +1138,7 @@ async def help(ctx: lightbulb.Context) -> None:
     view = miru.View()
     view.add_item(miru.Button(url="https://www.paypal.com/paypalme/NMdonations", label="Donate!"))
     view.add_item(miru.Button(url="https://github.com/ZingyTomato/Niko-Music", label="Visit my project!"))
-    view.add_item(miru.Button(url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2213571392&scope=bot%20applications.commands", label="Invite me!"))
+    view.add_item(miru.Button(url="https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2163239168&scope=bot%20applications.commands", label="Invite me!"))
     view.add_item(miru.Button(url="https://top.gg/bot/915595163286532167/vote", label="Vote for me!"))
     view.add_item(miru.Button(url="https://discord.gg/grSvEPYtDF", label="Support Server!"))
     await ctx.respond(embed=embed, components=view.build())
