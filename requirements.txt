@@ -2,7 +2,7 @@ hikari==2.0.0.dev111
 hikari-lightbulb==2.2.4
 lyricsgenius==3.0.1
 python-dotenv==0.21.0
-spotipy==2.20.0
+spotipy==2.21.0
 uvloop==0.17.0
 lavasnek-rs==0.1.0a5
 ytmusicapi==0.24.0
