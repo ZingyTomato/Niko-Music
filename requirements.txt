@@ -1,5 +1,5 @@
 hikari==2.0.0.dev111
-hikari-lightbulb==2.2.4
+hikari-lightbulb==2.2.5
 lyricsgenius==3.0.1
 python-dotenv==0.21.0
 spotipy==2.21.0
