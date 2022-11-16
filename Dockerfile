@@ -1,6 +1,6 @@
 FROM python:3.10-alpine
 
-WORKDIR /Niko-Music/niko-music
+WORKDIR /niko-music
 
 COPY bot.py bot.py
 COPY credentials.py credentials.py
