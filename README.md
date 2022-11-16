@@ -19,6 +19,7 @@ Enter `/Niko-Music` and install all the requirements using
 $ pip3 install -Ur requirements.txt
 ```
 Fill in `.env` with all the appropiate info. (Check the file)
+
 Run the bot using
 ```sh
 $ python3 niko-music/bot.py
@@ -26,4 +27,4 @@ $ python3 niko-music/bot.py
 
 ## Deployment with Docker
 
-Check out both the `docker-compose.yml` and `.env` files which are required to deploy the stack.
+Check out both the [`docker-compose.yml`](https://github.com/ZingyTomato/Niko-Music/blob/main/docker-compose.yml) and [`.env`](https://github.com/ZingyTomato/Niko-Music/blob/main/niko-music/.env) files which are required to deploy the stack.
