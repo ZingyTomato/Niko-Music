@@ -2,7 +2,7 @@
 
 A free and open source discord bot with no pay-wall. Made using discord.py and wavelink.
 
-Invite the bot to your server!: https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2163239168&scope=bot%20applications.commands
+Invite the bot to your server!: https://discord.com/api/oauth2/authorize?client_id=915595163286532167&permissions=2150656000&scope=applications.commands%20bot
 
 Docker Image : https://hub.docker.com/r/zingytomato/nikomusic
 
