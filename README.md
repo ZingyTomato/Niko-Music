@@ -21,7 +21,7 @@ $ pip3 install -Ur requirements.txt
 Fill in `.env` with all the appropiate info. (Check the file)
 Run the bot using
 ```sh
-$ python3 bot.py
+$ python3 niko-music/bot.py
 ```
 
 ## Deployment with Docker
