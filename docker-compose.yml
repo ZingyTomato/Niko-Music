@@ -7,9 +7,3 @@ services:
     env_file:
       - .env
     restart: unless-stopped
-  lavalink:
-    image: zingytomato/lavalink
-    container_name: lavalink
-    environment: 
-      - PASSWORD=nikomusic # Cannot be changed if using both images
-    restart: unless-stopped
