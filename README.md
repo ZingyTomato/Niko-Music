@@ -18,7 +18,7 @@ Enter `/Niko-Music` and install all the requirements using
 ```sh
 $ pip3 install -Ur requirements.txt
 ```
-Fill in `.env` with all the appropiate info. (Check the file)
+Fill in [`.env`](https://github.com/ZingyTomato/Niko-Music/blob/main/niko-music/.env) with all the appropiate info. (Check the file)
 
 Run the bot using
 ```sh

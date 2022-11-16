@@ -3,11 +3,11 @@ on:
   push:
     branches: [ main ]
     paths:
-      - music/**
+      - niko-music/**
   pull_request:
     branches: [ main ]
     paths:
-      - music/**
+      - niko-music/**
   workflow_dispatch:
 
 jobs:
