@@ -69,11 +69,14 @@ class Functions: ## Contains common functions.
         media_id = media_url.split("/")[-1].split("?")[0] ## Returns only the playlist ID.
         player = await self.get_player(guild) ## Retrieve the player.
             
-        player.reply = channel_id ## Define the same values as in the play command.
-        player.loop = False 
-        player.queue_loop = False 
-        player.looped_track = None 
-        player.queue_looped_track = None 
+        if not hasattr(player, 'reply'): ## Check whether or not the guild's player contains certain values.
+            player.reply = channel_id ## Define the same values as in the play command since the player attributes do not exist yet.
+            player.loop = False 
+            player.queue_loop = False 
+            player.looped_track = None 
+            player.queue_looped_track = None 
+        else: ## Otherwise, ignore.
+            pass
 
         if url_type == "playlist":
             try:
@@ -120,11 +123,14 @@ class Functions: ## Contains common functions.
         player = await self.get_player(guild) ## Retrieve the player.
         queue = await self.get_queue(guild) ## Retreieve the queue.
 
-        player.reply = channel_id ## Define the same values as in the play command.
-        player.loop = False 
-        player.queue_loop = False 
-        player.looped_track = None 
-        player.queue_looped_track = None 
+        if not hasattr(player, 'reply'): ## Check whether or not the guild's player contains certain values.
+            player.reply = channel_id ## Define the same values as in the play command since the player attributes do not exist yet.
+            player.loop = False 
+            player.queue_loop = False 
+            player.looped_track = None 
+            player.queue_looped_track = None 
+        else: ## Otherwise, ignore.
+            pass
 
         try:
             track_info = self.spotify.track(track_id) ## Retrieve track info.

@@ -200,7 +200,7 @@ async def shuffle(interaction: discord.Interaction):
     elif interaction.guild.voice_client: ## If bot is in a VC, shuffle the current queue.
         queue = await music.get_queue(interaction.guild) ## Retrieve the current queue.
         track = await music.get_track(interaction.guild) ## Retrieve the current track.
-        player = await music.get_player(interaction.guild)
+        player = await music.get_player(interaction.guild) ## Retrieve the current player.
     
         if len(queue) == 0: ## If there are no tracks in the queue, respond.
             return await interaction.followup.send(embed=await music.empty_queue())
