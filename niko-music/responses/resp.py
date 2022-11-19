@@ -27,7 +27,7 @@ class Responses: ## Contains various bot responses.
         embed = self.discord.Embed(title="**Unable to find any results!**", color=self.err_color)
         return
 
-    async def display_track(self, track_info, guild_id, is_queued: bool): ## Displays the track in an embed.
+    async def display_track(self, track_info, guild_id, is_queued: bool, is_playing: bool): ## Displays the current track.
         player = await self.get_player(guild_id) ## Retrieve the player.
 
         if is_queued == False and player.loop == True: ## If the track is not queued and the loop is enabled.
@@ -60,42 +60,22 @@ class Responses: ## Contains various bot responses.
         inline=False)
         embed.add_field(name="Album", value=f"[{track_metadata.album}]({track_metadata.album_url})", 
         inline=False)
-        embed.add_field(name="Duration", value=await self.format_duration(track_metadata.duration), 
-        inline=False)
+        
+        if is_playing: ## If /nowplaying is called, show the duration played. 
+            embed.add_field(name="Duration Played", value=
+            f"{await self.format_duration(player.position)}/{await self.format_duration(track_metadata.duration)}",
+            inline=False) ## Format the duration's into MM:SS
+        
+        else: ## Otherwise, just show the track's duration.
+            embed.add_field(name="Duration", value=await self.format_duration(track_metadata.duration), 
+            inline=False)
+        
         embed.add_field(name="Release Date", value=track_metadata.release_date, inline=False)
         embed.set_thumbnail(url=track_metadata.cover_url)
         return embed
 
     async def started_playing(self):
         embed = self.discord.Embed(title="**Started Session**.", color=self.sucess_color)
-        return embed
-
-    async def track_actions(self, track_info, guild_id, embed_title): ## Common embed for skip, pause, resume etc.
-        player = await self.get_player(guild_id) ## Retrieve the player.
-        
-        if player.loop == True: ## If the track loop is enabled.
-            embed = self.discord.Embed(title=f"**{embed_title} (Track Loop Enabled)**", color=self.sucess_color)
-
-        elif player.queue_loop == True: ## If the queue loop is enabled.
-            embed = self.discord.Embed(title=f"**{embed_title} (Queue Loop Enabled)**", color=self.sucess_color)
-
-        else: ## If neither loops are enabled.
-            embed = self.discord.Embed(title=f"**{embed_title}**", color=self.sucess_color)
-
-        embed.add_field(name="Name", value=f"[{track_info.title}]({track_info.title_url})", 
-        inline=False)
-        embed.add_field(name="Artist", value=f"[{track_info.author}]({track_info.author_url})", 
-        inline=False)
-        embed.add_field(name="Album", value=f"[{track_info.album}]({track_info.album_url})", 
-        inline=False)
-        
-        playback_info = await self.get_player(guild_id) ## Used to get the current track's position.
-        embed.add_field(name="Duration Played", value=
-        f"{await self.format_duration(playback_info.position)}/{await self.format_duration(track_info.duration)}",
-        inline=False) ## Format the duration's into MM:SS
-        
-        embed.add_field(name="Release Date", value=track_info.release_date, inline=False)
-        embed.set_thumbnail(url=track_info.cover_url)
         return embed
 
     async def show_queue(self, queue_info, guild_id):
@@ -140,7 +120,7 @@ class Responses: ## Contains various bot responses.
         embed = self.discord.Embed(title=f"**Volume has been set to {percentage}%.**", color=self.sucess_color)
         return embed
 
-    async def queue_track_actions(self, queue, track_index: int, embed_title: str):
+    async def queue_track_actions(self, queue, track_index: int, embed_title: str): ## Used for remove and skipto.
         try:
             
             embed = self.discord.Embed(title=f"**{embed_title} {queue[track_index - 1].title} - {queue[track_index -1].author}.**", 
@@ -149,6 +129,17 @@ class Responses: ## Contains various bot responses.
         except IndexError: ## If the track was not found in the queue, return False.
             return False
         
+        return embed
+
+    async def common_track_actions(self, track_info, embed_title: str): ## Used for pause, resume, loop, queueloop.
+        if track_info is None: ## If no track info is passed, just display the embed's title. Used in the case of queueloop.
+            embed = self.discord.Embed(title=f"**{embed_title}.**", 
+            color=self.sucess_color) 
+        
+        else: ## Otherwise, display both.
+            embed = self.discord.Embed(title=f"**{embed_title} {track_info.title} - {track_info.author}.**", 
+            color=self.sucess_color) 
+
         return embed
 
     async def track_not_in_queue(self):
@@ -296,3 +287,11 @@ class Responses: ## Contains various bot responses.
         embed.set_thumbnail(url=search_results['tracks']['items'][0]['album']['images'][0]['url'])
         embed.set_footer(text="Tip: Copy any one of the track or album hyperlinks and play them with /url.")
         return embed
+    
+    async def already_paused(self, track_info):
+        embed = self.discord.Embed(title=f"**{track_info.title} - {track_info.author} is already paused!**",  color=self.err_color)
+        return embed  
+
+    async def already_resumed(self, track_info):
+        embed = self.discord.Embed(title=f"**{track_info.title} - {track_info.author} has already been resumed!**",  color=self.err_color)
+        return embed  

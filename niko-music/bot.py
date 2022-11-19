@@ -64,7 +64,7 @@ async def on_wavelink_track_start(player: wavelink.Player, track): ## Fires when
     if player.queue_loop: ## If the queue loop is enabled, assign queue_looped_track to the current track.
         player.queue_looped_track = track
     
-    embed = await music.display_track(track, player.guild, False) ## Build the track info embed.
+    embed = await music.display_track(track, player.guild, False, False) ## Build the track info embed.
     await ctx.send(embed=embed, delete_after=60) ## Send the embed when a track starts and delete it after 60 seconds.
     
     logging_channel = client.get_channel(int(LOGGING_CHANNEL_ID)) ## Retrieve the logging channel.
@@ -85,7 +85,7 @@ async def join(interaction: discord.Interaction):
         return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif not interaction.guild.voice_client: ## If user is in a VC and bot is not, join it.
-        vc: wavelink.Player = await interaction.user.voice.channel.connect(cls=wavelink.Player, self_deaf=True)
+        await interaction.user.voice.channel.connect(cls=wavelink.Player, self_deaf=True)
         return await interaction.followup.send(embed=await music.in_vc())
     
     else: ## If bot is already in a VC, respond.
@@ -99,7 +99,7 @@ async def leave(interaction: discord.Interaction):
         return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, leave it.
-        vc: wavelink.Player = await interaction.guild.voice_client.disconnect()
+        await interaction.guild.voice_client.disconnect()
         return await interaction.followup.send(embed=await music.left_vc())
     
     else: ## If bot is not in VC, respond.
@@ -116,11 +116,16 @@ async def pause(interaction: discord.Interaction):
         return await interaction.followup.send(embed=await music.nothing_is_playing())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, pause the currently playing track.
-        vc: wavelink.Player = await interaction.guild.voice_client.pause()
+        player = await music.get_player(interaction.guild) ## Retrieve the current player.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
-        
-        return await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Paused Track"))
+     
+        if not player.is_paused(): ## If the current track is not paused, pause it.
+            await interaction.guild.voice_client.pause()
+            return await interaction.followup.send(embed=await music.common_track_actions(
+                track, "Paused"))
+
+        else: ## Otherwise, respond.
+            return await interaction.followup.send(embed=await music.already_paused(track))
 
 @slash.command(name="resume", description="Niko resumes the currently playing track.")
 async def resume(interaction: discord.Interaction):
@@ -133,11 +138,16 @@ async def resume(interaction: discord.Interaction):
         return await interaction.followup.send(embed=await music.nothing_is_playing())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, resume the currently playing track.
-        vc: wavelink.Player = await interaction.guild.voice_client.resume()
+        player = await music.get_player(interaction.guild) ## Retrieve the current player.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
-        
-        return await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Resumed Track"))
+
+        if player.is_paused(): ## If the current track is paused, resume it.
+            await interaction.guild.voice_client.resume()
+            return await interaction.followup.send(embed=await music.common_track_actions(
+                track, "Resumed"))
+
+        else: ## Otherwise, respond.
+            return await interaction.followup.send(embed=await music.already_resumed(track))
 
 @slash.command(name="stop", description="Niko stops the currently playing track.")
 async def stop(interaction: discord.Interaction):
@@ -151,8 +161,9 @@ async def stop(interaction: discord.Interaction):
     
     elif interaction.guild.voice_client: ## If bot is in a VC, stop the currently playing track.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
-        await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Stopped Track"))
+        player = await music.get_player(interaction.guild) ## Retrieve the current player.
+        await interaction.followup.send(embed=await music.common_track_actions(
+            track, "Stopped"))
         
         return await interaction.guild.voice_client.stop() ## Stop the track after sending the embed.
 
@@ -168,8 +179,8 @@ async def skip(interaction: discord.Interaction):
     
     elif interaction.guild.voice_client: ## If bot is in a VC, skip the currently playing track.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
-        await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Skipped Track"))
+        await interaction.followup.send(embed=await music.common_track_actions(
+            track, "Skipped"))
         
         return await interaction.guild.voice_client.stop() ## Skip the track after sending the embed.
 
@@ -207,7 +218,8 @@ async def shuffle(interaction: discord.Interaction):
         
         else:
             await music.shuffle(queue) ## Shuffle the queue.
-            player.queue.put(track) ## Add the current track to the end of the queue.
+            if not player.queue_loop: ## If the queue loop is not enabled, place the current track at the end of the queue.
+                player.queue.put(track) ## Add the current track to the end of the queue.
             return await interaction.followup.send(embed=await music.shuffled_queue())
 
 @slash.command(name="nowplaying", description="Niko shows you the currently playing song.")
@@ -222,9 +234,10 @@ async def nowplaying(interaction: discord.Interaction):
     
     elif interaction.guild.voice_client: ## If bot is in a VC, resume the currently playing track.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
+        player = await music.get_player(interaction.guild) ## Retrieve the current player.
         
-        return await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Currently Playing"))
+        return await interaction.followup.send(embed=await music.display_track(
+            track, interaction.guild, False, True))
 
 @slash.command(name="volume", description="Niko adjusts the volume.")
 @app_commands.describe(volume_percentage="The percentage to set the volume to. Accepted range: 0 to 100.")
@@ -327,8 +340,8 @@ async def loop(interaction: discord.Interaction):
         track = await music.get_track(interaction.guild) ## Retrieve the currently playing track.
         
         if not player.loop: ## If the loop is not enabled, enable it.
-            await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Loop Enabled")) ## Send the msg before enabling the loop to avoid confusing embed titles.
+            await interaction.followup.send(embed=await music.common_track_actions(
+            track, "Looping")) ## Send the msg before enabling the loop to avoid confusing embed titles.
             
             player.loop = True
             player.looped_track = track ## Store the currently playing track so that it can be looped.
@@ -336,8 +349,8 @@ async def loop(interaction: discord.Interaction):
         
         else: ## If the loop is already enabled, disable it.
             player.loop = False
-            return await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Loop Disabled"))
+            return await interaction.followup.send(embed=await music.common_track_actions(
+            track, "Stopped looping"))
 
 @slash.command(name="queueloop", description="Niko loops the current queue.")
 async def queueloop(interaction: discord.Interaction):
@@ -354,12 +367,12 @@ async def queueloop(interaction: discord.Interaction):
         track = await music.get_track(interaction.guild) ## Retrieve the currently playing track.
         queue = await music.get_queue(interaction.guild) ## Retrieve the current queue.
         
-        if len(queue) < 1: ## If there is less than 1 track in the queue, respond.
+        if len(queue) < 1 and not player.queue_loop: ## If there is less than 1 track in the queue and there is not a current queueloop, respond.
             return await interaction.followup.send(embed=await music.less_than_1_track())
 
         if not player.queue_loop: ## If the queue loop is not enabled, enable it.
-            await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Queue Loop Enabled")) ## Send the msg before enabling the queue loop to avoid confusing embed titles.
+            await interaction.followup.send(embed=await music.common_track_actions(
+            None, "Looping the queue")) ## Send the msg before enabling the queue loop to avoid confusing embed titles.
         
             player.queue_loop = True 
             player.queue_looped_track = track ## Add the currently playing track.
@@ -369,8 +382,8 @@ async def queueloop(interaction: discord.Interaction):
             player.queue_loop = False
             player.queue_looped_track = None ## Prevents the current track from constantly being assigned.
             
-            return await interaction.followup.send(embed=await music.track_actions(
-            track, interaction.guild, "Queue Loop Disabled"))
+            return await interaction.followup.send(embed=await music.common_track_actions(
+            None, "Stopped looping the queue"))
 
 @slash.command(name="newreleases", description="Niko shows you the newly released tracks of the day.")
 async def newreleases(interaction: discord.Interaction):
@@ -455,7 +468,7 @@ async def play(interaction: discord.Interaction , *, song_name: str):
     
     if vc.is_playing(): ## If a track is playing, add it to the queue.
         final_track = await music.gather_track_info(track.title, track.author, track) ## Modify the track info.
-        await interaction.followup.send(embed=await music.display_track(final_track, interaction.guild, True)) ## Use the modified track.
+        await interaction.followup.send(embed=await music.display_track(final_track, interaction.guild, True, False)) ## Use the modified track.
         return await vc.queue.put_wait(final_track) ## Add the modified track to the queue.
     
     else: ## Otherwise, begin playing.
@@ -472,7 +485,7 @@ async def play(interaction: discord.Interaction , *, song_name: str):
         return await interaction.followup.delete_message(msg.id) ## Delete the message after 5 seconds.
 
 @slash.command(name="url", description="Niko plays an album, playlist or track from a Spotify URL.")
-@app_commands.describe(spotify_url="Any Spotify: Album, Track or Playlist URL.")
+@app_commands.describe(spotify_url="Any Spotify album, track or playlist URL.")
 async def url(interaction: discord.Interaction, *, spotify_url: str):
     await interaction.response.defer()
 

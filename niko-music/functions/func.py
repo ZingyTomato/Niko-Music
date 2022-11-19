@@ -75,6 +75,7 @@ class Functions: ## Contains common functions.
             player.queue_loop = False 
             player.looped_track = None 
             player.queue_looped_track = None 
+        
         else: ## Otherwise, ignore.
             pass
 
@@ -129,6 +130,7 @@ class Functions: ## Contains common functions.
             player.queue_loop = False 
             player.looped_track = None 
             player.queue_looped_track = None 
+        
         else: ## Otherwise, ignore.
             pass
 
