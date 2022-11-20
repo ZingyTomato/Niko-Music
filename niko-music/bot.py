@@ -35,8 +35,10 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason): ## Fire
     ctx = player.reply ## Retrieve the guild's channel id.
     
     if all(member.bot for member in player.channel.members): ## If there are no members in the vc, leave.
-        await player.disconnect()
-        return await ctx.send(embed=await music.left_due_to_inactivity())
+        player.queue.clear() ## Clear the queue.
+        await player.stop() ## Stop the currently playing track.
+        await player.disconnect() ## Leave the VC.
+        await ctx.send(embed=await music.left_due_to_inactivity())
     
     elif not player.queue.is_empty and not player.loop and not player.queue_loop: ## If the queue is not empty and the loop is disabled, play the next track.
         next_track = await player.queue.get_wait()  ## Retrieve the queue.
@@ -461,14 +463,14 @@ async def play(interaction: discord.Interaction , *, song_name: str):
     
     try:
         track = await wavelink.YouTubeMusicTrack.search(song_name, return_first=True) ## Search for a song.
-    except IndexError: ## If no results are found, respond.
+    except (IndexError, TypeError): ## If no results are found or an invalid query was entered, respond.
         return await interaction.followup.send(embed=await music.no_track_results())
     
     vc.reply = interaction.channel ## Store the channel id to be used in track_start.
     
     if vc.is_playing(): ## If a track is playing, add it to the queue.
         final_track = await music.gather_track_info(track.title, track.author, track) ## Modify the track info.
-        await interaction.followup.send(embed=await music.display_track(final_track, interaction.guild, True, False)) ## Use the modified track.
+        await interaction.followup.send(embed=await music.added_track(final_track)) ## Use the modified track.
         return await vc.queue.put_wait(final_track) ## Add the modified track to the queue.
     
     else: ## Otherwise, begin playing.

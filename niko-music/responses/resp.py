@@ -37,7 +37,7 @@ class Responses: ## Contains various bot responses.
             embed = self.discord.Embed(title="**Now Playing (Queue Loop Enabled)**", color=self.sucess_color)
         
         elif is_queued == True and player.loop == True: ## If both the track is queued and the loop is enabled.
-            embed = self.discord.Embed(title="**Queued Track (Another Track Is Looping!)**", color=self.sucess_color)
+            embed = self.discord.Embed(title="**Queued Track (Another Track Is Looping)**", color=self.sucess_color)
 
         elif is_queued == True and player.queue_loop == True: ## If both the track is queued and the queue loop is enabled.
             embed = self.discord.Embed(title="**Queued Track (Queue Loop Enabled)**", color=self.sucess_color)
@@ -75,7 +75,7 @@ class Responses: ## Contains various bot responses.
         return embed
 
     async def started_playing(self):
-        embed = self.discord.Embed(title="**Started Session**.", color=self.sucess_color)
+        embed = self.discord.Embed(title="**Started Session.**", color=self.sucess_color)
         return embed
 
     async def show_queue(self, queue_info, guild_id):
@@ -217,7 +217,7 @@ class Responses: ## Contains various bot responses.
         value=f"[{playlist_info['owner']['display_name']}]({playlist_info['owner']['external_urls']['spotify']})", inline=False)
         
         embed.add_field(name="Tracks", value=playlist_info['tracks']['total'], inline=False)
-        embed.set_thumbnail(url=playlist_info['images'][0]['url'])
+        embed.set_thumbnail(url=playlist_info['images'][0]['url']) ## Set the thumbnail to the playlist's artwork.
         return embed
 
     async def display_album(self, album_url):
@@ -232,7 +232,7 @@ class Responses: ## Contains various bot responses.
         
         embed.add_field(name="Release Date", value=album_info['release_date'], inline=False)
         embed.add_field(name="Tracks", value=album_info['total_tracks'], inline=False)
-        embed.set_thumbnail(url=album_info['images'][0]['url'])
+        embed.set_thumbnail(url=album_info['images'][0]['url']) ## Set the thumbnail to the album's artwork
         return embed
 
     async def display_vote(self): ## Used for the vote command.
@@ -284,7 +284,7 @@ class Responses: ## Contains various bot responses.
         
         embed = self.discord.Embed(title="**Search Results**", description=formatted_results, color=self.sucess_color)
         
-        embed.set_thumbnail(url=search_results['tracks']['items'][0]['album']['images'][0]['url'])
+        embed.set_thumbnail(url=search_results['tracks']['items'][0]['album']['images'][0]['url']) ## Set the thumbnail to the first track's artwork.
         embed.set_footer(text="Tip: Copy any one of the track or album hyperlinks and play them with /url.")
         return embed
     
