@@ -113,7 +113,7 @@ async def join(interaction: discord.Interaction):
 async def leave(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, leave it.        
@@ -465,7 +465,7 @@ async def lyrics(interaction: discord.Interaction, *, song_name: str):
 async def play(interaction: discord.Interaction , *, song_name: str):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif not interaction.guild.voice_client: ## If user is in a VC, join it.

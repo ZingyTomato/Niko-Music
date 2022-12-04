@@ -284,7 +284,7 @@ class Responses: ## Contains various bot responses.
         
         embed = self.discord.Embed(title="**Search Results**", description=formatted_results, color=self.sucess_color)
         
-        embed.set_thumbnail(url=search_results['tracks']['items'][0]['album']['images'][0]['url']) ## Set the ebed thumbnail to the first track's artwork.
+        embed.set_thumbnail(url=search_results['tracks']['items'][0]['album']['images'][0]['url']) ## Set the thumbnail to the first track's artwork.
         embed.set_footer(text="Tip: Copy any one of the track or album hyperlinks and play them with /url.")
         return embed
     
