@@ -113,27 +113,30 @@ async def join(interaction: discord.Interaction):
 async def leave(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
-        return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
-    elif interaction.guild.voice_client: ## If bot is in a VC, leave it.        
+    if interaction.guild.voice_client and interaction.guild.voice_client.channel == interaction.user.voice.channel: ## If bot and the user are in the same VC, leave it.        
         await interaction.guild.voice_client.disconnect() 
         return await interaction.followup.send(embed=await music.left_vc()) 
     
-    else: ## If bot is not in VC, respond.
+    elif not interaction.guild.voice_client: ## If bot is not in VC, respond.
         return await interaction.followup.send(embed=await music.already_left_vc())
+
+    else: ## If user is not in the bot's VC, respond.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
         
 @slash.command(name="pause", description="Niko pauses the currently playing track.")
 async def pause(interaction: discord.Interaction):
     await interaction.response.defer()
-    
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
-    elif interaction.guild.voice_client: ## If bot is in a VC, pause the currently playing track.
+    elif interaction.guild.voice_client and interaction.guild.voice_client.channel == interaction.user.voice.channel: ## If bot is in a VC, pause the currently playing track.
         player = await music.get_player(interaction.guild) ## Retrieve the current player.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
      
@@ -144,16 +147,19 @@ async def pause(interaction: discord.Interaction):
 
         else: ## Otherwise, respond.
             return await interaction.followup.send(embed=await music.already_paused(track))
-
+    
 @slash.command(name="resume", description="Niko resumes the currently playing track.")
 async def resume(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
 
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, resume the currently playing track.
         player = await music.get_player(interaction.guild) ## Retrieve the current player.
@@ -171,11 +177,14 @@ async def resume(interaction: discord.Interaction):
 async def stop(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, stop the currently playing track.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
@@ -189,11 +198,14 @@ async def stop(interaction: discord.Interaction):
 async def skip(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, skip the currently playing track.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
@@ -206,11 +218,14 @@ async def skip(interaction: discord.Interaction):
 async def queue(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, show the current queue.
         return await interaction.followup.send(embed=await music.show_queue(
@@ -220,11 +235,14 @@ async def queue(interaction: discord.Interaction):
 async def shuffle(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, shuffle the current queue.
         queue = await music.get_queue(interaction.guild) ## Retrieve the current queue.
@@ -244,11 +262,14 @@ async def shuffle(interaction: discord.Interaction):
 async def nowplaying(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, resume the currently playing track.
         track = await music.get_track(interaction.guild) ## Retrieve currently playing track's info.
@@ -262,11 +283,14 @@ async def nowplaying(interaction: discord.Interaction):
 async def volume(interaction: discord.Interaction, *, volume_percentage: int):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, resume the currently playing track.
         
@@ -282,11 +306,14 @@ async def volume(interaction: discord.Interaction, *, volume_percentage: int):
 async def remove(interaction: discord.Interaction, *, track_index: int):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
 
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, try to remove the requested track.
         remove_msg = await music.queue_track_actions(await music.get_queue(interaction.guild), track_index, 
@@ -304,11 +331,14 @@ async def remove(interaction: discord.Interaction, *, track_index: int):
 async def skipto(interaction: discord.Interaction, *, track_index: int):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, try to remove the requested track.
         skipped_msg = await music.queue_track_actions(await music.get_queue(interaction.guild), track_index, 
@@ -326,11 +356,14 @@ async def skipto(interaction: discord.Interaction, *, track_index: int):
 async def empty(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, empty the queue.
         queue = await music.get_queue(interaction.guild) ## Retrieve the current queue.
@@ -347,11 +380,14 @@ async def empty(interaction: discord.Interaction):
 async def loop(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, enable/disable the loop.
         player = await music.get_player(interaction.guild) ## Retrieve the player.
@@ -374,11 +410,14 @@ async def loop(interaction: discord.Interaction):
 async def queueloop(interaction: discord.Interaction):
     await interaction.response.defer()
     
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
+
     elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
         return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif interaction.guild.voice_client: ## If bot is in a VC, enable/disable the queue loop.
         player = await music.get_player(interaction.guild) ## Retrieve the player.
@@ -465,11 +504,11 @@ async def lyrics(interaction: discord.Interaction, *, song_name: str):
 async def play(interaction: discord.Interaction , *, song_name: str):
     await interaction.response.defer()
     
-    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
-        return await interaction.followup.send(embed=await music.user_not_in_vc())
-    
-    elif not interaction.guild.voice_client: ## If user is in a VC, join it.
+    if not interaction.guild.voice_client: ## If user is in a VC, join it.
         vc: wavelink.Player = await interaction.user.voice.channel.connect(cls=wavelink.Player, self_deaf=True)
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
     elif re.match(music.url_regex, song_name): ## If a URL is entered, respond.
         return await interaction.followup.send(embed=await music.urls_not_supported())
@@ -507,11 +546,11 @@ async def play(interaction: discord.Interaction , *, song_name: str):
 async def url(interaction: discord.Interaction, *, spotify_url: str):
     await interaction.response.defer()
 
-    if not interaction.user.voice or interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If user is not in the bot's VC, respond.
-        return await interaction.followup.send(embed=await music.user_not_in_vc())
-
-    elif not interaction.guild.voice_client: ## If bot is not in a VC, respond.
+    if not interaction.guild.voice_client: ## If bot is not in a VC, respond.
         await interaction.user.voice.channel.connect(cls=wavelink.Player, self_deaf=True)
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
 
     else: ## If bot is already in a VC, pass.
         pass
