@@ -72,6 +72,21 @@ async def on_wavelink_track_start(player: wavelink.Player, track): ## Fires when
     logging_channel = client.get_channel(int(LOGGING_CHANNEL_ID)) ## Retrieve the logging channel.
     await logging_channel.send(embed=await music.log_track_started(track, player.guild)) ## Send the log embed.
 
+@client.event
+async def on_voice_state_update(member: discord.member.Member, before: discord.member.VoiceState,
+after: discord.member.VoiceState): ## Fires when the bot is disconnected/connected to a VC.
+
+    player: wavelink.Player = await music.get_player(member.guild) ## Retrieve the player.
+
+    if before.channel and after.channel is None: ## If the bot was previsously in a VC, disconnect to avoid errors when rejoining the VC.
+        try:
+            await player.disconnect()
+        except AttributeError: ## Occurs when /leave is entered as the bot has no player once disconnected.
+            pass
+
+    else: ## Otherwise, pass.
+        pass
+
 async def connect_nodes():
     await client.wait_until_ready() ## Wait until the bot is ready.
     await wavelink.NodePool.create_node(bot=client, host=LAVALINK_HOST,
@@ -100,9 +115,9 @@ async def leave(interaction: discord.Interaction):
     if not interaction.user.voice: ## If user is not in a VC, respond.
         return await interaction.followup.send(embed=await music.user_not_in_vc())
     
-    elif interaction.guild.voice_client: ## If bot is in a VC, leave it.
-        await interaction.guild.voice_client.disconnect()
-        return await interaction.followup.send(embed=await music.left_vc())
+    elif interaction.guild.voice_client: ## If bot is in a VC, leave it.        
+        await interaction.guild.voice_client.disconnect() 
+        return await interaction.followup.send(embed=await music.left_vc()) 
     
     else: ## If bot is not in VC, respond.
         return await interaction.followup.send(embed=await music.already_left_vc())
