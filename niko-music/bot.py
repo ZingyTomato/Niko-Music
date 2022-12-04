@@ -76,16 +76,18 @@ async def on_wavelink_track_start(player: wavelink.Player, track): ## Fires when
 async def on_voice_state_update(member: discord.member.Member, before: discord.member.VoiceState,
 after: discord.member.VoiceState): ## Fires when the bot is disconnected/connected to a VC.
 
-    player: wavelink.Player = await music.get_player(member.guild) ## Retrieve the player.
+    if member.id == client.user.id: ## Check whether or not the voice update was caused by the bot.
+    
+        player: wavelink.Player = await music.get_player(member.guild) ## Retrieve the player.
 
-    if before.channel and after.channel is None: ## If the bot was previsously in a VC, disconnect to avoid errors when rejoining the VC.
-        try:
-            await player.disconnect()
-        except AttributeError: ## Occurs when /leave is entered as the bot has no player once disconnected.
+        if before.channel and after.channel is None: ## If the bot was previsously in a VC, disconnect to avoid errors when rejoining the VC.
+            try:
+                await player.disconnect()
+            except AttributeError: ## Occurs when /leave is entered as the bot has no player once disconnected.
+                pass
+
+        else: ## Otherwise, pass.
             pass
-
-    else: ## Otherwise, pass.
-        pass
 
 async def connect_nodes():
     await client.wait_until_ready() ## Wait until the bot is ready.
