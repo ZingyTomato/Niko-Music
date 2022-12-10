@@ -503,8 +503,11 @@ async def lyrics(interaction: discord.Interaction, *, song_name: str):
 @app_commands.describe(song_name="The name of the song to search for. Don't forget to include the artist's name as well!")
 async def play(interaction: discord.Interaction , *, song_name: str):
     await interaction.response.defer()
+
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
     
-    if not interaction.guild.voice_client: ## If user is in a VC, join it.
+    elif not interaction.guild.voice_client: ## If user is in a VC, join it.
         vc: wavelink.Player = await interaction.user.voice.channel.connect(cls=wavelink.Player, self_deaf=True)
 
     elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
