@@ -15,6 +15,7 @@ music = Music()
 @client.event
 async def on_ready(): ## Fires when the bot is ready.
     await slash.sync() ## Sync slash comands.
+    await asyncio.sleep(10) ## Give enough time for the lavalink server to boot up before connecting.
     client.loop.create_task(connect_nodes()) ## Create task to connect to the lavalink server.
     print("Niko is Ready!")
     await update_status.start() ## Start the update status loop.
