@@ -112,8 +112,8 @@ class Responses: ## Contains various bot responses.
         embed = self.discord.Embed(title="**Shuffled the queue**.", color=self.sucess_color)
         return embed
 
-    async def volume_too_high(self):
-        embed = self.discord.Embed(title="**Volume cannot be greater than 100%.**", color=self.err_color)
+    async def volume_not_in_range(self):
+        embed = self.discord.Embed(title="**Volume cannot be greater than 100% or less than 0%.**", color=self.err_color)
         return embed
 
     async def volume_set(self, percentage: str):

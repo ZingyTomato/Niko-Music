@@ -11,7 +11,8 @@ class Functions: ## Contains common functions.
     async def get_queue(self, guild):
         return self.wavelink.NodePool.get_node().get_player(guild).queue._queue ## Returns the queue.
 
-    async def shuffle(self, queue):
+    async def shuffle(self, guild):
+        queue = await self.get_queue(guild) ## Retrieve the queue.
         return self.random.shuffle(queue) ## Shuffles the queue.
 
     async def gather_track_info(self, title, artist, track_info): ## Use info from spotify to modify existing track_info.
@@ -41,8 +42,15 @@ class Functions: ## Contains common functions.
         player = await self.get_player(guild) ## Retrieve the player.
         return await player.set_volume(volume) ## Change the volume.
 
-    async def remove_track(self, queue, track_index: int):
+    async def remove_track(self, guild, track_index: int):
+        queue = await self.get_queue(guild) ## Retrieve the queue.
         return queue.__delitem__(track_index -1) ## Remove the track from the queue. 1 is subtracted as the queue starts from 0.
+
+    async def move_track(self, guild, track_index: int, desired_index: int):
+        player = await self.get_player(guild) ## Retrieve the player.
+        track_to_move = player.queue._queue[track_index - 1] ## Store the track to move before removing it.
+        player.queue.__delitem__(track_index - 1) ## Remove the track to move to avoid duplicates in the queue.
+        return player.queue.put_at_index(desired_index - 1, track_to_move) ## Place it in the desired position in the queue.
 
     async def skipto_track(self, guild, track_index: int):
         player = await self.get_player(guild) ## Retrieve the player.
@@ -51,7 +59,7 @@ class Functions: ## Contains common functions.
         return queue.__delitem__(track_index) ## Remove the track from the queue.
 
     async def get_new_releases(self):
-        tracks = self.spotify.new_releases(limit=10) ## Returns 10 newly released tracks from spotify.
+        tracks = self.spotify.new_releases(country="US", limit=10) ## Returns 10 newly released tracks from spotify.
         return tracks
 
     async def get_trending(self):

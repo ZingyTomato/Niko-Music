@@ -15,7 +15,7 @@ music = Music()
 @client.event
 async def on_ready(): ## Fires when the bot is ready.
     await slash.sync() ## Sync slash comands.
-    await asyncio.sleep(10) ## Give enough time for the lavalink server to boot up before connecting.
+    await asyncio.sleep(5) ## Give enough time for the lavalink server to boot up before connecting.
     client.loop.create_task(connect_nodes()) ## Create task to connect to the lavalink server.
     print("Niko is Ready!")
     await update_status.start() ## Start the update status loop.
@@ -254,7 +254,7 @@ async def shuffle(interaction: discord.Interaction):
             return await interaction.followup.send(embed=await music.empty_queue())
         
         else:
-            await music.shuffle(queue) ## Shuffle the queue.
+            await music.shuffle(interaction.guild) ## Shuffle the queue.
             if not player.queue_loop: ## If the queue loop is not enabled, place the current track at the end of the queue.
                 player.queue.put(track) ## Add the current track to the end of the queue.
             return await interaction.followup.send(embed=await music.shuffled_queue())
@@ -295,8 +295,8 @@ async def volume(interaction: discord.Interaction, *, volume_percentage: int):
     
     elif interaction.guild.voice_client: ## If bot is in a VC, resume the currently playing track.
         
-        if volume_percentage > 100: ## Volume cannot be greater than 100%.
-            return await interaction.followup.send(embed=await music.volume_too_high())
+        if volume_percentage > 100 or volume_percentage < 0: ## Volume cannot be greater than 100% or less than 0%.
+            return await interaction.followup.send(embed=await music.volume_not_in_range())
         
         else:
             await music.modify_volume(interaction.guild, volume_percentage) ## Adjust the volume to the specified percentage.
@@ -321,11 +321,37 @@ async def remove(interaction: discord.Interaction, *, track_index: int):
         "Removed") ## Store the info beforehand as the track will be removed.
         
         if remove_msg != False: ## If the track exists in the queue, respond.
-            await music.remove_track(await music.get_queue(interaction.guild), track_index) ## Remove the track.
+            await music.remove_track(interaction.guild, track_index) ## Remove the track.
             return await interaction.followup.send(embed=remove_msg)
         
         else: ## If the track was not removed, respond.
             return await interaction.followup.send(embed=await music.track_not_in_queue())
+
+@slash.command(name="move", description="Niko moves a track in the queue to a specific position.")
+@app_commands.describe(current_index="The number of track to move in the queue. Find out the track number using /queue.")
+@app_commands.describe(desired_index="The number to move the track to in the queue.")
+async def move(interaction: discord.Interaction, *, current_index: int, desired_index: int):
+    await interaction.response.defer()
+    
+    if not interaction.user.voice: ## If user is not in the bot's VC, respond.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
+
+    elif not await music.get_player(interaction.guild) or not await music.get_track(interaction.guild): ## If nothing is playing, respond.
+        return await interaction.followup.send(embed=await music.nothing_is_playing())
+
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel: ## If the user is not in the same VC as the bot.
+        return await interaction.followup.send(embed=await music.user_not_in_vc())
+    
+    elif interaction.guild.voice_client: ## If bot is in a VC, try to move the requested track.
+        moved_msg = await music.queue_track_actions(await music.get_queue(interaction.guild), current_index, 
+        "Moved") ## Store the info beforehand as the track will be moved.
+        
+        if moved_msg != False: ## If the track exists in the queue, respond.
+            await music.move_track(interaction.guild, current_index, desired_index) ## Move the track.
+            return await interaction.followup.send(embed=moved_msg)
+
+        else: ## If the track was not moved, respond.
+            return await interaction.followup.send(embed=await music.track_not_in_queue())            
 
 @slash.command(name="skipto", description="Niko skips to a specific track in the queue.")
 @app_commands.describe(track_index="The number of track to skip to. Find out the track number using /queue.")
