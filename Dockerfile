@@ -7,5 +7,7 @@ COPY requirements.txt requirements.txt
 COPY niko-music/functions/ functions/
 COPY niko-music/responses/ responses/
 
+RUN apk add g++ make libffi-dev openssl-dev --no-cache
+
 RUN pip3 install -Ur requirements.txt
 CMD ["python3", "bot.py"]
