@@ -8,15 +8,11 @@ on:
   push:
     branches:
       - 'master'
-      - 'dev'
-      - 'v*.*.*'
     tags:
-      - 'v*.*.*'
+      - 'latest'
   pull_request:
     branches:
       - 'master'
-      - 'dev'
-      - 'v*.*.*'
 
 permissions: 
   contents: read
