@@ -2,7 +2,7 @@
 version: "2.1"
 services:
   nikomusic:
-    image: zingytomato/nikomusic
+    image: zingytomato/nikomusic:main
     container_name: nikomusic
     env_file:
       - .env
